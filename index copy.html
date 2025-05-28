@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>賞味期限管理アプリ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>🍅 賞味期限管理アプリ</h1>
+
+<!-- 入力フォーム -->
+<div id="form-view">
+  <input type="text" id="item-name" placeholder="食材名">
+  <input type="date" id="expiry-date">
+  <button onclick="addItem()">追加</button>
+
+  <!-- ⬇ これを追加！ -->
+  <button onclick="showList()">一覧を見る</button>
+</div>
+
+
+  <!-- 一覧画面 -->
+  <div id="list-view" style="display: none;">
+    <h2>登録済み一覧</h2>
+    <ul id="item-list"></ul>
+    <button onclick="showForm()">戻る</button>
+  </div>
+
+  <script src="script_copy.js"></script>
+</body>
+</html>
