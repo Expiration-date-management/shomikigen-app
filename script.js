@@ -11,6 +11,7 @@ function saveItem() {
   const year = parseInt(document.getElementById("year").value);
   const month = parseInt(document.getElementById("month").value);
   const day = parseInt(document.getElementById("day").value);
+  const genre = document.getElementById("genre").value;
 
   if (!name || !isValidDate(year, month, day)) {
     alert("正しい入力をしてください！");
@@ -18,7 +19,7 @@ function saveItem() {
   }
 
   const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  const newItem = { name, date: dateStr };
+  const newItem = { name, date: dateStr, genre };
 
   if (editingIndex !== null) {
     // 編集中：ローカルデータを上書き。Google Sheetsには送信しない
@@ -27,7 +28,7 @@ function saveItem() {
   } else {
     // 新規追加時だけ Sheets にも保存
     itemList.push(newItem);
-    sendToGoogleSheets(name, dateStr);
+    sendToGoogleSheets(name, dateStr, genre);
   }
 
   saveToLocal();
@@ -36,13 +37,17 @@ function saveItem() {
 }
 
 
-function renderList() {
+function renderList(filter = "すべて") {
   const container = document.getElementById("item-list");
   container.innerHTML = "";
 
-  itemList.forEach((item, index) => {
+  const filteredItems = filter === "すべて"
+    ? itemList
+    : itemList.filter(item => item.genre === filter);
+
+  filteredItems.forEach((item, index) => {
     const div = document.createElement("div");
-    div.textContent = `${item.name} - 賞味期限: ${item.date}`;
+    div.textContent = `${item.name} - ${item.genre} - 賞味期限: ${item.date}`;
 
     const editBtn = document.createElement("button");
     editBtn.textContent = "編集";
@@ -56,6 +61,11 @@ function renderList() {
     div.appendChild(deleteBtn);
     container.appendChild(div);
   });
+}
+
+function filterList() {
+  const selectedGenre = document.getElementById("genre-filter").value;
+  renderList(selectedGenre);
 }
 
 function startEdit(index) {
@@ -158,7 +168,7 @@ function updateDays() {
   }
 }
 
-function sendToGoogleSheets(name, date) {
+function sendToGoogleSheets(name, date,genre) {
   const url = "https://script.google.com/a/macros/fcs.ed.jp/s/AKfycbx31O_MaBPYH_Q3FXwWfOg_EUiQhphoCSlXcRPi4WZnGEznPhUNxWhdg1CwfpTPxZWgeA/exec"; // 👈 ここ！
 
   fetch(url, {
@@ -166,7 +176,7 @@ function sendToGoogleSheets(name, date) {
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ name, date })
+    body: JSON.stringify({ name, date, genre})
   })
     .then(res => res.text())
     .then(result => console.log("保存結果:", result))
