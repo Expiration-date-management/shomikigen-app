@@ -19,6 +19,19 @@
       <select id="year"></select> 年
       <select id="month"></select> 月
       <select id="day"></select> 日
+      <label>ジャンル：</label>
+        <select id="genre">
+          <option value="調味料">調味料</option>
+          <option value="カップ麺">カップ麺</option>
+          <option value="レトルト">レトルト</option>
+          <option value="冷凍食品">冷凍食品</option>
+          <option value="缶詰">缶詰</option>
+          <option value="お菓子">お菓子</option>
+          <option value="飲み物">飲み物</option>
+          <option value="乾麺">乾麺</option>
+          <option value="その他">その他</option>
+</select>
+
     </div>
 
     <button onclick="saveItem()">追加 / 更新</button>
@@ -28,7 +41,26 @@
   <!-- 一覧画面 -->
   <div id="list-screen" style="display: none;">
     <h2>登録済み一覧</h2>
+        <label>ジャンルで絞り込み：</label>
+      <select id="genre-filter" onchange="filterList()">
+      <option value="すべて">すべて</option>
+      <option value="調味料">調味料</option>
+      <option value="カップ麺">カップ麺</option>
+      <option value="レトルト">レトルト</option>
+      <option value="冷凍食品">冷凍食品</option>
+      <option value="缶詰">缶詰</option>
+      <option value="お菓子">お菓子</option>
+      <option value="飲み物">飲み物</option>
+      <option value="乾麺">乾麺</option>
+      <option value="その他">その他</option>
+</select>
+
+
     <div id="item-list"></div>
+
+
+
+<div id="item-list"></div>
 
     <button onclick="showForm()">戻る</button>
   </div>
