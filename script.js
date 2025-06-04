@@ -151,11 +151,15 @@ function updateDays() {
 }
 
 function sendToGoogleSheets(name, date, genre) {
-  const url = "https://script.google.com/a/macros/fcs.ed.jp/s/AKfycbx31O_MaBPYH_Q3FXwWfOg_EUiQhphoCSlXcRPi4WZnGEznPhUNxWhdg1CwfpTPxZWgeA/exec";
+  const url = "https://script.google.com/macros/s/AKfycbzLgIKQrHRmHrf0nE2t6z-fiBx-OBvQmo2fLFTV8-_3NniQp_Ia_xaM7VLFpkN0Br0/exec";
 
   fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, date, genre })
-  });
+  })
+  .then((res) => res.text())
+  .then((text) => console.log("GASからの応答:", text))
+  .catch((err) => console.error("送信エラー:", err));
 }
+
