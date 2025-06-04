@@ -1,6 +1,6 @@
 let itemList = [];
 let editingIndex = null;
-console.log("バージョン1.2.1")
+console.log("バージョン1.2.2")
 
 window.onload = function () {
   loadFromLocal();
@@ -152,14 +152,22 @@ function updateDays() {
 }
 
 function sendToGoogleSheets(name, date, genre) {
-  const url = "https://script.google.com/macros/s/AKfycbypES5U5gxFNh1pHcNsIlqDoCBZkLh-LBuzkiKv2dTSapVrpQUkt58Y6QJ85eg2_4a6/exec"
+  const url = "https://script.google.com/macros/s/AKfycbxWQYVoDmSYB0xJ7zq2cWzaySWZ-pqLsHflaYiouESsn2yTIo7NTAOhXnPdFJ6KAI7L/exec
+  const formData = new URLSearchParams();
+  formData.append("name", name);
+  formData.append("date", date);
+  formData.append("genre", genre);
+
   fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, date, genre })
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: formData.toString()
   })
-  .then((res) => res.text())
-  .then((text) => console.log("GASからの応答:", text))
-  .catch((err) => console.error("送信エラー:", err));
+    .then((res) => res.text())
+    .then((text) => console.log("GASからの応答:", text))
+    .catch((err) => console.error("送信エラー:", err));
 }
+
 
