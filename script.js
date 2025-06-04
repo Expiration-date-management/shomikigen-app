@@ -152,7 +152,7 @@ function updateDays() {
 }
 
 function sendToGoogleSheets(name, date, genre) {
-  const url = "https://script.google.com/macros/s/AKfycbxWQYVoDmSYB0xJ7zq2cWzaySWZ-pqLsHflaYiouESsn2yTIo7NTAOhXnPdFJ6KAI7L/exec
+  const url = "https://script.google.com/macros/s/AKfycbxWQYVoDmSYB0xJ7zq2cWzaySWZ-pqLsHflaYiouESsn2yTIo7NTAOhXnPdFJ6KAI7L/exec"
   const formData = new URLSearchParams();
   formData.append("name", name);
   formData.append("date", date);
