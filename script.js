@@ -4,6 +4,9 @@ let editingIndex = null;
 window.onload = function () {
   loadFromLocal();
   initDateSelectors();
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js");
+  }
 };
 
 function saveItem() {
@@ -22,11 +25,9 @@ function saveItem() {
   const newItem = { name, date: dateStr, genre };
 
   if (editingIndex !== null) {
-    // 編集中：ローカルデータを上書き。Google Sheetsには送信しない
     itemList[editingIndex] = newItem;
     editingIndex = null;
   } else {
-    // 新規追加時だけ Sheets にも保存
     itemList.push(newItem);
     sendToGoogleSheets(name, dateStr, genre);
   }
@@ -36,16 +37,15 @@ function saveItem() {
   showList();
 }
 
-
 function renderList(filter = "すべて") {
   const container = document.getElementById("item-list");
   container.innerHTML = "";
 
-  const filteredItems = filter === "すべて"
+  const filtered = filter === "すべて"
     ? itemList
     : itemList.filter(item => item.genre === filter);
 
-  filteredItems.forEach((item, index) => {
+  filtered.forEach((item, index) => {
     const div = document.createElement("div");
     div.textContent = `${item.name} - ${item.genre} - 賞味期限: ${item.date}`;
 
@@ -63,27 +63,21 @@ function renderList(filter = "すべて") {
   });
 }
 
-function filterList() {
-  const selectedGenre = document.getElementById("genre-filter").value;
-  renderList(selectedGenre);
-}
-
 function startEdit(index) {
   const item = itemList[index];
   editingIndex = index;
-
   document.getElementById("item-name").value = item.name;
-  const [year, month, day] = item.date.split("-").map(Number);
-  document.getElementById("year").value = year;
-  document.getElementById("month").value = month;
+  const [y, m, d] = item.date.split("-").map(Number);
+  document.getElementById("year").value = y;
+  document.getElementById("month").value = m;
   updateDays();
-  document.getElementById("day").value = day;
-
+  document.getElementById("day").value = d;
+  document.getElementById("genre").value = item.genre;
   showForm();
 }
 
 function deleteItem(index) {
-  if (confirm("このデータを削除しますか？")) {
+  if (confirm("削除しますか？")) {
     itemList.splice(index, 1);
     saveToLocal();
     renderList();
@@ -97,11 +91,9 @@ function showList() {
 }
 
 function showForm() {
-  // 画面切り替え
   document.getElementById("list-screen").style.display = "none";
   document.getElementById("form-view").style.display = "block";
 
-  // フォームの初期化（ただし編集時は中身を維持する）
   if (editingIndex === null) {
     document.getElementById("item-name").value = "";
     const today = new Date();
@@ -109,12 +101,14 @@ function showForm() {
     document.getElementById("month").value = today.getMonth() + 1;
     updateDays();
     document.getElementById("day").value = today.getDate();
+    document.getElementById("genre").value = "調味料";
   }
-
-  // 👇 ここは削除！！！
-  // editingIndex = null;
 }
 
+function filterList() {
+  const selected = document.getElementById("genre-filter").value;
+  renderList(selected);
+}
 
 function saveToLocal() {
   localStorage.setItem("items", JSON.stringify(itemList));
@@ -122,69 +116,46 @@ function saveToLocal() {
 
 function loadFromLocal() {
   const data = localStorage.getItem("items");
-  if (data) {
-    itemList = JSON.parse(data);
-  }
+  if (data) itemList = JSON.parse(data);
 }
 
-function isValidDate(year, month, day) {
-  const date = new Date(year, month - 1, day);
-  return (
-    date.getFullYear() === year &&
-    date.getMonth() === month - 1 &&
-    date.getDate() === day
-  );
+function isValidDate(y, m, d) {
+  const date = new Date(y, m - 1, d);
+  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
 }
 
 function initDateSelectors() {
-  const yearSelect = document.getElementById("year");
-  const monthSelect = document.getElementById("month");
-  const daySelect = document.getElementById("day");
-
+  const year = document.getElementById("year");
+  const month = document.getElementById("month");
+  const day = document.getElementById("day");
   const thisYear = new Date().getFullYear();
-  for (let y = thisYear; y <= thisYear + 5; y++) {
-    yearSelect.innerHTML += `<option value="${y}">${y}</option>`;
-  }
-  for (let m = 1; m <= 12; m++) {
-    monthSelect.innerHTML += `<option value="${m}">${m}</option>`;
-  }
-  for (let d = 1; d <= 31; d++) {
-    daySelect.innerHTML += `<option value="${d}">${d}</option>`;
-  }
 
-  yearSelect.addEventListener("change", updateDays);
-  monthSelect.addEventListener("change", updateDays);
+  for (let y = thisYear; y <= thisYear + 5; y++) year.innerHTML += `<option value="${y}">${y}</option>`;
+  for (let m = 1; m <= 12; m++) month.innerHTML += `<option value="${m}">${m}</option>`;
+  updateDays();
+
+  year.addEventListener("change", updateDays);
+  month.addEventListener("change", updateDays);
 }
 
 function updateDays() {
-  const year = parseInt(document.getElementById("year").value);
-  const month = parseInt(document.getElementById("month").value);
-  const daySelect = document.getElementById("day");
+  const y = parseInt(document.getElementById("year").value);
+  const m = parseInt(document.getElementById("month").value);
+  const day = document.getElementById("day");
 
-  const lastDay = new Date(year, month, 0).getDate();
-  daySelect.innerHTML = "";
-  for (let d = 1; d <= lastDay; d++) {
-    daySelect.innerHTML += `<option value="${d}">${d}</option>`;
+  const last = new Date(y, m, 0).getDate();
+  day.innerHTML = "";
+  for (let d = 1; d <= last; d++) {
+    day.innerHTML += `<option value="${d}">${d}</option>`;
   }
 }
 
-function sendToGoogleSheets(name, date,genre) {
-  const url = "https://script.google.com/a/macros/fcs.ed.jp/s/AKfycbx31O_MaBPYH_Q3FXwWfOg_EUiQhphoCSlXcRPi4WZnGEznPhUNxWhdg1CwfpTPxZWgeA/exec"; // 👈 ここ！
+function sendToGoogleSheets(name, date, genre) {
+  const url = "https://script.google.com/a/macros/fcs.ed.jp/s/AKfycbx31O_MaBPYH_Q3FXwWfOg_EUiQhphoCSlXcRPi4WZnGEznPhUNxWhdg1CwfpTPxZWgeA/exec";
 
   fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ name, date, genre})
-  })
-    .then(res => res.text())
-    .then(result => console.log("保存結果:", result))
-    .catch(err => console.error("エラー:", err));
-}
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js')
-    .then(() => console.log("Service Worker registered"))
-    .catch(err => console.error("SW registration failed:", err));
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, date, genre })
+  });
 }
