@@ -1,49 +1,26 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="manifest" href="manifest.json">
-  <title>賞味期限管理</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>賞味期限管理アプリ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.json" />
 </head>
 <body>
-  <h1>🍅 賞味期限管理アプリ</h1>
+  <h1>賞味期限管理</h1>
 
   <!-- 入力画面 -->
   <div id="form-view">
-    <input type="text" id="item-name" placeholder="食材名">
+    <input type="text" id="item-name" placeholder="食材名"><br />
 
-    <div id="date-input">
-      <label>賞味期限：</label>
-      <select id="year"></select> 年
-      <select id="month"></select> 月
-      <select id="day"></select> 日
-      <label>ジャンル：</label>
-        <select id="genre">
-          <option value="調味料">調味料</option>
-          <option value="カップ麺">カップ麺</option>
-          <option value="レトルト">レトルト</option>
-          <option value="冷凍食品">冷凍食品</option>
-          <option value="缶詰">缶詰</option>
-          <option value="お菓子">お菓子</option>
-          <option value="飲み物">飲み物</option>
-          <option value="乾麺">乾麺</option>
-          <option value="その他">その他</option>
-</select>
+    <label>賞味期限：</label>
+    <select id="year"></select> 年
+    <select id="month"></select> 月
+    <select id="day"></select> 日
+    <br />
 
-    </div>
-
-    <button onclick="saveItem()">追加 / 更新</button>
-    <button onclick="showList()">一覧を見る</button>
-  </div>
-
-  <!-- 一覧画面 -->
-  <div id="list-screen" style="display: none;">
-    <h2>登録済み一覧</h2>
-        <label>ジャンルで絞り込み：</label>
-      <select id="genre-filter" onchange="filterList()">
-      <option value="すべて">すべて</option>
+    <label>ジャンル：</label>
+    <select id="genre">
       <option value="調味料">調味料</option>
       <option value="カップ麺">カップ麺</option>
       <option value="レトルト">レトルト</option>
@@ -53,15 +30,33 @@
       <option value="飲み物">飲み物</option>
       <option value="乾麺">乾麺</option>
       <option value="その他">その他</option>
-</select>
+    </select>
+    <br />
 
+    <button onclick="saveItem()">追加 / 更新</button>
+    <button onclick="showList()">一覧を見る</button>
+  </div>
+
+  <!-- 一覧画面 -->
+  <div id="list-screen" style="display: none;">
+    <h2>登録済み一覧</h2>
+
+    <label>ジャンルで絞り込み：</label>
+    <select id="genre-filter" onchange="filterList()">
+      <option value="すべて">すべて</option>
+      <option value="調味料">調味料</option>
+      <option value="カップ麺">カップ麺</option>
+      <option value="レトルト">レトルト</option>
+      <option value="冷凍食品">冷凍食品</option>
+      <option value="缶詰">缶詰</option>
+      <option value="お菓子">お菓子</option>
+      <option value="飲み物">飲み物</option>
+      <option value="乾麺">乾麺</option>
+      <option value="加工食品">加工食品</option>
+      <option value="その他">その他</option>
+    </select>
 
     <div id="item-list"></div>
-
-
-
-<div id="item-list"></div>
-
     <button onclick="showForm()">戻る</button>
   </div>
 
