@@ -1,6 +1,6 @@
 let itemList = [];
 let editingIndex = null;
-console.log("バージョン1.22")
+console.log("バージョン1.23")
 
 window.onload = function () {
   loadFromLocal();
@@ -152,7 +152,8 @@ function updateDays() {
 }
 
 function sendToGoogleSheets(name, date, genre) {
-  const url = "https://script.google.com/macros/s/AKfycbxdVbpm0srokhUKy0g295sFIo-THfI_mwV_MEo398Syroxs-qSawmBwxDhWM3SizJCn/exec"
+  const url = "https://script.google.com/macros/s/AKfycbwPs0UncQrpE835ysJj6pPObq-uielZVwSE1FTmRVmsMuZ72li0XHG6Wa1blX2weI64/exec";
+
   const formData = new URLSearchParams();
   formData.append("name", name);
   formData.append("date", date);
