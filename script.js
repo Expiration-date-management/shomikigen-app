@@ -1,6 +1,6 @@
 let itemList = [];
 let editingIndex = null;
-console.log("バージョン1.23")
+console.log("バージョン1.24")
 
 window.onload = function () {
   loadFromLocal();
@@ -30,7 +30,8 @@ function saveItem() {
     editingIndex = null;
   } else {
     itemList.push(newItem);
-    sendToGoogleSheets(name, dateStr, genre);
+    sendToGoogleForm(name, dateStr, genre);
+
   }
 
   saveToLocal();
@@ -151,24 +152,21 @@ function updateDays() {
   }
 }
 
-function sendToGoogleSheets(name, date, genre) {
-  const url = "https://script.google.com/macros/s/AKfycbwPs0UncQrpE835ysJj6pPObq-uielZVwSE1FTmRVmsMuZ72li0XHG6Wa1blX2weI64/exec";
+function sendToGoogleForm(name, date, genre) {
+  const formUrl = "https://docs.google.com/forms/d/e/1FAIpQLScfwIUy4_9MxdVqYTJIqCJ_p4UiLCSZizgOMOV2ORpSnBJI4Q/viewform?usp=dialog";
 
-  const formData = new URLSearchParams();
-  formData.append("name", name);
-  formData.append("date", date);
-  formData.append("genre", genre);
+  const formData = new FormData();
+  formData.append("entry.1558708232", name);   // 食材名
+  formData.append("entry.1715987385", date);   // 賞味期限（YYYY-MM-DD）
+  formData.append("entry.1120155883", genre);  // ジャンル
 
-  fetch(url, {
+  fetch(formUrl, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: formData.toString()
+    mode: "no-cors",
+    body: formData
   })
-    .then((res) => res.text())
-    .then((text) => console.log("GASからの応答:", text))
-    .catch((err) => console.error("送信エラー:", err));
+    .then(() => console.log("Googleフォーム送信完了！"))
+    .catch((err) => console.error("送信失敗:", err));
 }
 
 
