@@ -153,7 +153,7 @@ function updateDays() {
 }
 
 function sendToGoogleForm(name, date, genre) {
-  const formUrl = "https://docs.google.com/forms/d/e/1FAIpQLScfwIUy4_9MxdVqYTJIqCJ_p4UiLCSZizgOMOV2ORpSnBJI4Q/viewform?usp=dialog";
+  const formUrl = "https://docs.google.com/forms/d/e/1FAIpQLScfwIUy4_9MxdVqYTJIqCJ_p4UiLCSZizgOMOV2ORpSnBJI4Q/viewform?usp=header";
 
   const formData = new FormData();
   formData.append("entry.1558708232", name);   // 食材名
