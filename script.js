@@ -1,6 +1,6 @@
 let itemList = [];
 let editingIndex = null;
-console.log("バージョン1.24.1")
+console.log("バージョン1.24.2")
 
 window.onload = function () {
   loadFromLocal();
@@ -153,20 +153,21 @@ function updateDays() {
 }
 
 function sendToGoogleForm(name, date, genre) {
-  const formUrl = "https://docs.google.com/forms/d/e/1FAIpQLScfwIUy4_9MxdVqYTJIqCJ_p4UiLCSZizgOMOV2ORpSnBJI4Q/viewform?usp=header";
+  const formUrl = "https://docs.google.com/forms/d/e/1FAIpQLScfwIUy4_9MxdVqYTJIqCJ_p4UiLCSZizgOMOV2ORpSnBJI4Q/formResponse";
 
   const formData = new FormData();
-  formData.append("entry.1558708232", name);   // 食材名
-  formData.append("entry.1715987385", date);   // 賞味期限（YYYY-MM-DD）
-  formData.append("entry.1120155883", genre);  // ジャンル
+  formData.append("entry.1136820557", name);   // 食材名
+  formData.append("entry.808248111", date);    // 賞味期限
+  formData.append("entry.1059346555", genre);  // ジャンル
 
   fetch(formUrl, {
     method: "POST",
     mode: "no-cors",
     body: formData
   })
-    .then(() => console.log("Googleフォーム送信完了！"))
-    .catch((err) => console.error("送信失敗:", err));
+    .then(() => console.log("✅ Googleフォーム送信完了！"))
+    .catch((err) => console.error("❌ 送信失敗:", err));
 }
+
 
 
