@@ -1,6 +1,6 @@
 let itemList = [];
 let editingIndex = null;
-console.log("バージョン1.24")
+console.log("バージョン1.24.1")
 
 window.onload = function () {
   loadFromLocal();
