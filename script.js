@@ -1,6 +1,6 @@
 let itemList = JSON.parse(localStorage.getItem("items")) || [];
 let editingIndex = null;
-console.log("バージョン2.03")
+console.log("バージョン2.04")
 
 function saveItem() {
   const name    = document.getElementById("item-name").value;
@@ -97,17 +97,18 @@ function editItem(index) {
 
 function showList() {
   document.getElementById("input-screen").style.display = "none";
+  document.getElementById("calendar-screen").style.display = "none"; // ← これ追加！
   document.getElementById("list-screen").style.display = "block";
-  renderList();
 }
+
 
 function showInput(isEdit = false) {
   document.getElementById("input-screen").style.display = "block";
   document.getElementById("list-screen").style.display = "none";
-  if (!isEdit) {
-    clearForm();
-  }
+  document.getElementById("calendar-screen").style.display = "none"; // ← ここも！
+  if (!isEdit) clearForm();
 }
+
 
 function clearForm() {
   document.getElementById("item-name").value = "";
@@ -173,3 +174,57 @@ function updateDaysInSelector(year, month) {
     daySel.appendChild(option);
   }
 }
+
+  let currentMonthOffset = 0; // 0:今月, -1:先月, +1:来月...
+
+  function showCalendar() {
+    document.getElementById("input-screen").style.display = "none";
+    document.getElementById("list-screen").style.display = "none";
+    document.getElementById("calendar-screen").style.display = "block";
+    renderCalendar();
+  }
+
+  function changeMonth(offset) {
+    currentMonthOffset += offset;
+    renderCalendar();
+  }
+
+  function renderCalendar() {
+    const table = document.getElementById("calendar-table");
+    const monthLabel = document.getElementById("calendar-month");
+    const now = new Date();
+    const viewDate = new Date(now.getFullYear(), now.getMonth() + currentMonthOffset, 1);
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+
+    monthLabel.textContent = `${year}年 ${month + 1}月`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    table.innerHTML = "<tr><th>日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th></tr>";
+
+    let row = "<tr>";
+    for (let i = 0; i < firstDay; i++) row += "<td></td>";
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const items = itemList.filter(item => item.date === dateStr);
+
+      let cellContent = `<strong>${d}</strong>`;
+      if (items.length > 0) {
+        cellContent += `<ul style='padding-left: 1em;'>`;
+        items.forEach(item => {
+          cellContent += `<li style='font-size: 0.8em;'>${item.name}</li>`;
+        });
+        cellContent += `</ul>`;
+      }
+
+      row += `<td>${cellContent}</td>`;
+      if ((firstDay + d) % 7 === 0) {
+        row += "</tr><tr>";
+      }
+    }
+    row += "</tr>";
+    table.innerHTML += row;
+  }
