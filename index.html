@@ -1,66 +1,85 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>賞味期限管理アプリ</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="manifest" href="manifest.json" />
 </head>
 <body>
   <h1>賞味期限管理</h1>
 
-  <!-- 入力画面 -->
-  <div id="form-view">
-    <input type="text" id="item-name" placeholder="食材名"><br />
+  <div id="input-screen">
+    <label>食材名：<input type="text" id="item-name"></label><br>
+    <label>賞味期限：
+      <select id="year"></select> 年
+      <select id="month"></select> 月
+      <select id="day"></select> 日
+    </label><br>
+    <label>ジャンル：
+      <select id="genre">
+        <option value="調味料">調味料</option>
+        <option value="加工食品">加工食品</option>
+        <option value="カップ麺">カップ麺</option>
+        <option value="乾麺">乾麺</option>
+        <option value="レトルト">レトルト</option>
+        <option value="冷凍食品">冷凍食品</option>
+        <option value="缶詰">缶詰</option>
+        <option value="お菓子">お菓子</option>
+        <option value="飲み物">飲み物</option>
+        <option value="その他">その他</option>
+      </select>
+      <label>保管場所：
+        <select id="area">
+          <option value="冷蔵室">冷蔵室</option>
+          <option value="野菜室">野菜室</option>
+          <option value="冷凍室">冷凍室</option>
+          <option value="棚１">棚１</option>
+          <option value="棚２">棚２</option>
+          <option value="棚３">棚３</option>
+        </select><br>
 
-    <label>賞味期限：</label>
-    <select id="year"></select> 年
-    <select id="month"></select> 月
-    <select id="day"></select> 日
-    <br />
+      <label>備考：<input type="text" id="remarks">
+      </label><br>
 
-    <label>ジャンル：</label>
-    <select id="genre">
-      <option value="調味料">調味料</option>
-      <option value="カップ麺">カップ麺</option>
-      <option value="レトルト">レトルト</option>
-      <option value="冷凍食品">冷凍食品</option>
-      <option value="缶詰">缶詰</option>
-      <option value="お菓子">お菓子</option>
-      <option value="飲み物">飲み物</option>
-      <option value="乾麺">乾麺</option>
-      <option value="加工食品">加工食品</option>
-      <option value="その他">その他</option>
-    </select>
-    <br />
 
-    <button onclick="saveItem()">追加 / 更新</button>
+
+    <button onclick="saveItem()">保存</button>
     <button onclick="showList()">一覧を見る</button>
   </div>
 
-  <!-- 一覧画面 -->
   <div id="list-screen" style="display: none;">
-    <h2>登録済み一覧</h2>
-
-    <label>ジャンルで絞り込み：</label>
-    <select id="genre-filter" onchange="filterList()">
-      <option value="すべて">すべて</option>
-      <option value="調味料">調味料</option>
-      <option value="カップ麺">カップ麺</option>
-      <option value="レトルト">レトルト</option>
-      <option value="冷凍食品">冷凍食品</option>
-      <option value="缶詰">缶詰</option>
-      <option value="お菓子">お菓子</option>
-      <option value="飲み物">飲み物</option>
-      <option value="乾麺">乾麺</option>
-      <option value="加工食品">加工食品</option>
-      <option value="その他">その他</option>
-    </select>
-
-    <div id="item-list"></div>
-    <button onclick="showForm()">戻る</button>
+    <h2>保存一覧</h2>
+      <label>ジャンルで絞り込み：</label>
+    <select id="genre-filter" onchange="renderList()">
+    <option value="すべて">すべて</option>
+    <option value="調味料">調味料</option>
+    <option value="カップ麺">カップ麺</option>
+    <option value="レトルト">レトルト</option>
+    <option value="冷凍食品">冷凍食品</option>
+    <option value="缶詰">缶詰</option>
+    <option value="お菓子">お菓子</option>
+    <option value="飲み物">飲み物</option>
+    <option value="乾麺">乾麺</option>
+    <option value="その他">その他</option>
+  </select>
+    <label>保存場所で絞り込み：
+      <select id="filter-area" onchange="renderList()">
+        <option value="">すべて</option>
+        <option value="冷蔵庫">冷蔵庫</option>
+        <option value="冷凍庫">冷凍庫</option>
+        <option value="常温">常温</option>
+        <option value="野菜室">野菜室</option>
+        <option value="棚１">棚１</option>
+        <option value="棚２">棚２</option>
+        <option value="棚３">棚３</option>
+        <option value="その他">その他</option>
+      </select>
+    </label>
+    <table border="1" id="item-table"></table>
+    <br>
+    <button onclick="showInput()">戻る</button>
   </div>
 
-  <script src="script.js"></script>
+
+  <script src="script6-23.js"></script>
 </body>
 </html>
