@@ -35,6 +35,7 @@
           <option value="棚１">棚１</option>
           <option value="棚２">棚２</option>
           <option value="棚３">棚３</option>
+          <option value="その他">その他</option>
         </select><br>
 
       <label>備考：<input type="text" id="remarks">
@@ -64,20 +65,32 @@
     <label>保存場所で絞り込み：
       <select id="filter-area" onchange="renderList()">
         <option value="">すべて</option>
-        <option value="冷蔵庫">冷蔵庫</option>
-        <option value="冷凍庫">冷凍庫</option>
-        <option value="常温">常温</option>
-        <option value="野菜室">野菜室</option>
-        <option value="棚１">棚１</option>
-        <option value="棚２">棚２</option>
-        <option value="棚３">棚３</option>
-        <option value="その他">その他</option>
-      </select>
+          <option value="冷蔵室">冷蔵室</option>
+          <option value="野菜室">野菜室</option>
+          <option value="冷凍室">冷凍室</option>
+          <option value="棚１">棚１</option>
+          <option value="棚２">棚２</option>
+          <option value="棚３">棚３</option>
+          <option value="その他">その他</option>
+        </select>
     </label>
     <table border="1" id="item-table"></table>
     <br>
+    <button onclick="showCalendar()">カレンダー表示</button>
     <button onclick="showInput()">戻る</button>
   </div>
+
+    <!-- カレンダー表示用のHTML + JS -->
+<div id="calendar-screen" style="display:none">
+  <h2>カレンダー表示</h2>
+  <div>
+    <button onclick="changeMonth(-1)">◀ 前の月</button>
+    <span id="calendar-month"></span>
+    <button onclick="changeMonth(1)">次の月 ▶</button>
+  </div>
+  <table border="1" id="calendar-table"></table>
+  <button onclick="showList()">一覧に戻る</button>
+</div>
 
 
   <script src="script.js"></script>
