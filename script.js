@@ -1,6 +1,6 @@
 let itemList = JSON.parse(localStorage.getItem("items")) || [];
 let editingIndex = null;
-console.log("バージョン2.5")
+console.log("バージョン2.06")
 
 function saveItem() {
   const name    = document.getElementById("item-name").value;
