@@ -1,0 +1,33 @@
+body {
+  font-family: "Helvetica", "UD デジタル 教科書体 N-R", sans-serif;
+  background-color: #f5f5f5;
+  margin: 20px;
+}
+
+h2 {
+  color: #333;
+}
+
+button {font-family: "Helvetica", "UD デジタル 教科書体 N-R", sans-serif;
+  background-color: #f4e113;
+  color: black;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #b9ab0d;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
