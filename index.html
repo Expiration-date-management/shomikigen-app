@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>賞味期限管理アプリ</title>
 </head>
+
 <body>
   <h1>賞味期限管理</h1>
 
@@ -80,7 +81,18 @@
     <button onclick="showInput()">戻る</button>
   </div>
 
-    <!-- カレンダー表示用のHTML + JS -->
+<style>
+  #calendar-table td {
+    vertical-align: top;
+    padding: 7px;
+  }
+
+  .calendar-cell {
+    min-height: 4px;
+  }
+</style>
+
+
 <div id="calendar-screen" style="display:none">
   <h2>カレンダー表示</h2>
   <div>
@@ -89,10 +101,8 @@
     <button onclick="changeMonth(1)">次の月 ▶</button>
   </div>
   <table border="1" id="calendar-table"></table>
-  <button onclick="showList()">一覧に戻る</button>
+  <button onclick="showInput()">戻る</button>
 </div>
-
-
   <script src="script.js"></script>
 </body>
 </html>
