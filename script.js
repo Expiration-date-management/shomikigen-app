@@ -1,6 +1,6 @@
 let itemList = JSON.parse(localStorage.getItem("items")) || [];
 let editingIndex = null;
-console.log("バージョン2.06.5")
+console.log("バージョン2.7")
 
 function saveItem() {
   const name    = document.getElementById("item-name").value;
@@ -58,12 +58,19 @@ itemList.forEach((item, index) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const diffDays = Math.floor((itemDate - today) / (1000 * 60 * 60 * 24));
+    let color = "black";
+    if (itemDate < today) {
+      color = "red"; // 期限切れ
+    } else if (diffDays <= 7) {
+    color = "#f1c40f"; // 黄色（期限近い）
+    }
+
   const isDanger = itemDate < today || (diffDays >= 0 && diffDays <= 7);
   const style = isDanger ? " style='color:red;'" : "";
 
   const row = `<tr>
-    <td${style}>${item.name}</td>
-    <td${style}>${item.date}</td>
+    <td style="color: ${color}">${item.name}</td>
+    <td style="color: ${color}">${item.date}</td>
     <td>${item.genre}</td>
     <td>${item.area}</td>
     <td>${item.remarks || ""}</td>
@@ -308,11 +315,15 @@ let currentMonthOffset = 0;
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           const diffDays = Math.floor((itemDate - today) / (1000 * 60 * 60 * 24));
-          const itemIsDanger = itemDate < today || (diffDays >= 0 && diffDays <= 7);
-          if (itemIsDanger) isDanger = true;
+          const itemIsExpired = itemDate < today;
+const itemIsUpcoming = !itemIsExpired && diffDays <= 7;
 
-          const color = itemIsDanger ? "red" : "black";
-          cellContent += `<li style='font-size: 0.8em; color:${color};'>${item.name}</li>`;
+let color = "black";
+if (itemIsExpired) color = "red";
+else if (itemIsUpcoming) color = "#f1c40f";
+
+cellContent += `<li style='font-size: 0.8em; color:${color};'>${item.name}</li>`;
+
         });
         cellContent += `</ul>`;
       }
