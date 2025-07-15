@@ -2,15 +2,26 @@ body {
   font-family: "Helvetica", "UD デジタル 教科書体 N-R", sans-serif;
   font-size: 20px;
   margin: 20px;
-  background-image: url('和食でわぁショック.png') ; 
+  background-image: url('back_ground_image_smartphone.png') ; 
   background-color: rgb(0,0,0,0.3);
   background-blend-mode: multiply;
-  background-size:100%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-attachment: fixed; 
 }
 
 p {
   font-family: "Helvetica", "UD デジタル 教科書体 N-R", sans-serif;
   font-size: 20px;
+  border: 1px solid rgb(0,0,0);
+  background-color: rgb(255, 255, 255,0.7);
+  width: fit-content;
+  height: 30px;
+}
+subtitle {
+  font-family: "Helvetica", "UD デジタル 教科書体 N-R", sans-serif;
+  font-size: 30px;
   border: 1px solid rgb(0,0,0);
   background-color: rgb(255, 255, 255,0.7);
   width: fit-content;
@@ -28,7 +39,8 @@ h2 {
   color: #333;
 }
 
-button {font-family: "Helvetica", "UD デジタル 教科書体 N-R", sans-serif;
+button {
+  font-family: "Helvetica", "UD デジタル 教科書体 N-R", sans-serif;
   font-size: 20px;
   background-color: rgb(244, 225, 19);
   color: black;
@@ -45,11 +57,19 @@ button:hover {
 table {
   width: 100%;
   border-collapse: collapse;
+  border-color: 10px solid rgb(0,0,0);
   margin-top: 10px;
   background-color: rgb(255, 255, 255,0.7);
 }
 
 th, td {
-  border: 1px solid #ddd;
+  border: 1px solid rgb(0,0,0);
   padding: 8px;
+}
+span{
+  font-family: "Helvetica", "UD デジタル 教科書体 N-R", sans-serif;
+  font-size: 25px;
+  color: white;
+  -webkit-text-stroke: 0.5px black;
+  text-stroke: 0.5px black;
 }
