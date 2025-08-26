@@ -1,6 +1,6 @@
 let itemList = JSON.parse(localStorage.getItem("items")) || [];
 let editingIndex = null;
-console.log("バージョン2.7")
+console.log("バージョン3.0")
 
 function saveItem() {
   const name    = document.getElementById("item-name").value;
@@ -43,7 +43,7 @@ function saveToLocal() {
 
 function renderList() {
   const table = document.getElementById("item-table");
-  table.innerHTML = "<tr><th>名前</th><th>賞味期限</th><th>ジャンル</th><th>保管場所</th><th>備考</th><th>操作</th></tr>";
+  table.innerHTML = "<tr><th>名前</th><th>賞味期限</th><th>ジャンル</th><th>保管場所</th><th>備考</th><th>操作</th><th>レシピ検索</th></tr>";
 
   const genreFilter = document.getElementById("genre-filter").value;
   const areaFilter = document.getElementById("filter-area").value;
@@ -62,7 +62,7 @@ itemList.forEach((item, index) => {
     if (itemDate < today) {
       color = "red"; // 期限切れ
     } else if (diffDays <= 7) {
-    color = "#f1c40f"; // 黄色（期限近い）
+    color = "orange"; // 黄色（期限近い）
     }
 
   const isDanger = itemDate < today || (diffDays >= 0 && diffDays <= 7);
@@ -71,12 +71,15 @@ itemList.forEach((item, index) => {
   const row = `<tr>
     <td style="color: ${color}">${item.name}</td>
     <td style="color: ${color}">${item.date}</td>
-    <td>${item.genre}</td>
-    <td>${item.area}</td>
-    <td>${item.remarks || ""}</td>
+    <td style="color: ${color}">${item.genre}</td>
+    <td style="color: ${color}">${item.area}</td>
+    <td style="color: ${color}">${item.remarks || ""}</td>
     <td>
       <button onclick="editItem(${index})">編集</button>
       <button onclick="deleteItem(${index})">削除</button>
+    </td>
+    <td><a href="https://cookpad.com/jp/search/${item.name}" target="_blank" class="link-button">クックパッドで${item.name}を検索</a><br>
+        <a href="https://www.kurashiru.com/search?query=${item.name}" target="_blank" class="link-button">クラシルで${item.name}を検索</a>
     </td>
   </tr>`;
   table.innerHTML += row;
@@ -84,6 +87,9 @@ itemList.forEach((item, index) => {
 
 
   displayUpcomingExpirations();
+}
+function goToPage(url) {
+  wwindow.open(url, '_blank')
 }
 
 function filterList() {
@@ -322,7 +328,7 @@ let color = "black";
 if (itemIsExpired) color = "red";
 else if (itemIsUpcoming) color = "#f1c40f";
 
-cellContent += `<li style='font-size: 0.8em; color:${color};'>${item.name}</li>`;
+cellContent += `<li style='font-size: 20px; color:${color};'>${item.name}</li>`;
 
         });
         cellContent += `</ul>`;
