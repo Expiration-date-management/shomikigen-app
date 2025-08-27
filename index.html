@@ -8,14 +8,19 @@
 
 <body>
   <h1>賞味期限管理</h1>
-    <div id="input-screen">
-    <label><p>食材名：<input type="text" id="item-name"></p></label>
-    <label><p>賞味期限：
+<div id="input-screen">
+  <form id="input-section">
+    <label>食材名：
+      <input type="text" id="item-name">
+    </label>
+
+    <label>賞味期限：
       <select id="year"></select> 年
       <select id="month"></select> 月
       <select id="day"></select> 日
-    </label></p>
-    <label><p>ジャンル：
+    </label>
+
+    <label>ジャンル：
       <select id="genre">
         <option value="調味料">調味料</option>
         <option value="加工食品">加工食品</option>
@@ -28,25 +33,30 @@
         <option value="飲み物">飲み物</option>
         <option value="その他">その他</option>
       </select>
-      <label>保管場所：
-        <select id="area">
-          <option value="冷蔵室">冷蔵室</option>
-          <option value="野菜室">野菜室</option>
-          <option value="冷凍室">冷凍室</option>
-          <option value="棚１">棚１</option>
-          <option value="棚２">棚２</option>
-          <option value="棚３">棚３</option>
-          <option value="その他">その他</option>
-        </select><br>
+    </label>
 
-      <label><p>備考：<input type="text" id="remarks">
-      </p></label><br>
+    <label>保管場所：
+      <select id="area">
+        <option value="冷蔵室">冷蔵室</option>
+        <option value="野菜室">野菜室</option>
+        <option value="冷凍室">冷凍室</option>
+        <option value="棚１">棚１</option>
+        <option value="棚２">棚２</option>
+        <option value="棚３">棚３</option>
+        <option value="その他">その他</option>
+      </select>
+    </label>
 
+    <label>備考：
+      <input type="text" id="remarks">
+    </label>
 
-
-    <button onclick="saveItem()">保存</button>
-    <button onclick="showList()">一覧を見る</button>
-  </div>
+    <div class="button-group">
+      <button type="button" onclick="saveItem()">保存</button>
+      <button type="button" onclick="showList()">一覧を見る</button>
+    </div>
+  </form>
+</div>
 
   <div id="list-screen" style="display: none;">
     <h2><subtitle>保存一覧</subtitle></h2>
@@ -106,4 +116,5 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
