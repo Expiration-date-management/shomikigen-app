@@ -1,6 +1,6 @@
 let itemList = JSON.parse(localStorage.getItem("items")) || [];
 let editingIndex = null;
-console.log("バージョン3.0")
+console.log("バージョン3.1")
 
 function saveItem() {
   const name    = document.getElementById("item-name").value;
@@ -351,3 +351,4 @@ window.onload = function () {
   renderList();
   displayUpcomingExpirations(); // ← 入力画面用にも呼び出し
 };
+
