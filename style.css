@@ -1,3 +1,17 @@
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1em; /* 各項目の間隔 */
+  padding: 1em;
+  background: rgba(255, 255, 255, 0.7); /* 背景が見やすいよう半透明 */
+  border-radius: 8px;
+}
+form label {
+  font-size: 1.2em;
+  margin-bottom: 0.3em;
+  display: block;
+}
+
 body {
   font-family: "UD デジタル 教科書体 NK-R", sans-serif;
   font-size: 20px;
@@ -10,15 +24,14 @@ body {
   background-position: center center;
   background-attachment: fixed; 
 }
-
 p {
   font-family: "UD デジタル 教科書体 NK-R", sans-serif;
-  font-size: 20px;
+  font-size: clamp(20px, 7vw, 40px);
   border: 1px solid rgb(0,0,0);
   background-color: rgb(255, 255, 255,0.7);
   width: fit-content;
-  height: 30px;
-  margin: 10px;
+  height: clamp(30px, 10vw, 70px);;
+  margin: clamp(20px, 10vw, 40px);;
 }
 subtitle {
   font-family: "UD デジタル 教科書体 NK-R", sans-serif;
@@ -28,6 +41,15 @@ subtitle {
   width: fit-content;
   height: 30px;
 }
+
+#input-section input{
+  font-family: "UD デジタル 教科書体 NK-R", sans-serif;
+  font-size: 1em;   /* 普通の文字サイズ */
+  padding: 0.2em;   /* 少し余白 */
+  width: auto;      /* 必要な分だけ幅を取る */
+  max-width: 300px; /* 画面幅が広くても伸びすぎない */
+  box-sizing: border-box;
+}
 input{
   font-family: "UD デジタル 教科書体 NK-R", sans-serif;
   font-size: 18px;
@@ -36,6 +58,16 @@ input{
   border: 1px solid rgb(0,0,0,0.7);
   margin: 2.5px;
 }
+
+#input-section select {
+  font-family: "UD デジタル 教科書体 NK-R", sans-serif;
+  font-size: 1em;   /* 普通の文字サイズ */
+  padding: 0.2em;   /* 少し余白 */
+  width: auto;      /* 必要な分だけ幅を取る */
+  max-width: 200px; /* 画面幅が広くても伸びすぎない */
+  box-sizing: border-box;
+}
+
 select{
   font-family: "UD デジタル 教科書体 NK-R", sans-serif;
   font-size: 18px;
@@ -55,6 +87,27 @@ h2 {
   color: #333;
 }
 
+#input-section .button-group {
+  display: flex;
+  gap: 1em; /* ボタン間の余白 */
+  justify-content: center;
+  margin-top: 1em;
+}
+
+#input-section button {
+  flex: 1;  /* 均等に幅を取る */
+  font-size: 1.2em;
+  font-family:  "UD デジタル 教科書体 NK-R", sans-serif;
+  background-color: rgb(244, 225, 19);
+  color: black;
+  border: 2px solid rgb(100, 94, 26);
+  border-radius: 6px;
+  padding: 1em;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+}
+
 button {
   font-family:  "UD デジタル 教科書体 NK-R", sans-serif;
   font-size: 20px;
@@ -65,7 +118,6 @@ button {
   border-radius: 5px;
   cursor: pointer;
 }
-
 button:hover {
   background-color: rgb(185, 171, 13);
 }
@@ -75,7 +127,7 @@ table {
   border-collapse: collapse;
   border-color: 10px solid rgb(0,0,0);
   margin-top: 10px;
-  background-color: rgb(0, 255, 150,0.8);
+  background-color: rgba(255, 255, 255, 0.7);
 }
 
 th {
@@ -122,4 +174,11 @@ span{
 
 .link-button:hover {
   background-color: rgb(185, 171, 13);
+}
+
+@media (max-width: 600px) {
+  #input-section button {
+    font-size: 1.3em;
+    padding: 1.2em;
+  }
 }
