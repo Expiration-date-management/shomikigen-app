@@ -58,6 +58,7 @@
   </form>
 </div>
 
+
   <div id="list-screen" style="display: none;">
     <h2><subtitle>保存一覧</subtitle></h2>
       <label><p>ジャンルで絞り込み：</label>
@@ -84,6 +85,12 @@
           <option value="棚３">棚３</option>
           <option value="その他">その他</option>
         </select></p>
+      <p><label for="sort-select">並び替え：期限が</label>
+        <select id="sort-select" onchange="sortItems(this.value)">
+          <option value="asc">近い順</option>
+          <option value="desc">遠い順</option>
+        </select>
+      </label></p>
     </label>
     <table border="1" id="item-table"></table>
     <br>
@@ -116,5 +123,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
-
