@@ -1,6 +1,6 @@
 let itemList = JSON.parse(localStorage.getItem("items")) || [];
 let editingIndex = null;
-console.log("バージョン3.1")
+console.log("バージョン3.0")
 
 function saveItem() {
   const name    = document.getElementById("item-name").value;
@@ -40,8 +40,19 @@ function isValidDate(y, m, d) {
 function saveToLocal() {
   localStorage.setItem("items", JSON.stringify(itemList));
 }
+// 並び替え専用関数
+function sortItems(order = "asc") {
+  if (order === "asc") {
+    itemList.sort((a, b) => new Date(a.date) - new Date(b.date)); // 期限が近い順
+  } else {
+    itemList.sort((a, b) => new Date(b.date) - new Date(a.date)); // 期限が遠い順
+  }
+  renderList(); // 並び替えた結果を再描画
+}
+
 
 function renderList() {
+  
   const table = document.getElementById("item-table");
   table.innerHTML = "<tr><th>名前</th><th>賞味期限</th><th>ジャンル</th><th>保管場所</th><th>備考</th><th>操作</th><th>レシピ検索</th></tr>";
 
@@ -351,4 +362,3 @@ window.onload = function () {
   renderList();
   displayUpcomingExpirations(); // ← 入力画面用にも呼び出し
 };
-
