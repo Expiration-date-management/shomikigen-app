@@ -70,10 +70,12 @@ input{
 
 select{
   font-family: "UD デジタル 教科書体 NK-R", sans-serif;
-  font-size: 18px;
+  font-size: 0.75em;   /* 普通の文字サイズ */
+  padding: 0.2em;   /* 少し余白 */
+  width: auto;      /* 必要な分だけ幅を取る */
+  max-width: 120px; /* 画面幅が広くても伸びすぎない */
   background-color: rgb(255,255,255,0.7);
   border: 1px solid rgb(0,0,0);
-    margin: 2.5px;
 }
 h1{
   font-family: "UD デジタル 教科書体 NK-R", sans-serif;
