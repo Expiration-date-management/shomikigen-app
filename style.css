@@ -33,6 +33,13 @@ p {
   height: clamp(30px, 10vw, 70px);;
   margin: clamp(20px, 10vw, 40px);;
 }
+toiawase{
+  font-family: "UD デジタル 教科書体 NK-R", sans-serif;
+  font-size: 20px;
+  border: 1px solid rgb(0,0,0);
+  background-color: rgb(255, 255, 255,0.7);
+  width: fit-content;
+}
 subtitle {
   font-family: "UD デジタル 教科書体 NK-R", sans-serif;
   font-size: 30px;
@@ -184,3 +191,4 @@ span{
     padding: 1.2em;
   }
 }
+
