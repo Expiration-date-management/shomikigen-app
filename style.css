@@ -87,6 +87,25 @@ button:hover, .link-button:hover {
   font-size: 1.2em;
   padding: 0.8em;
 }
+/* 一覧表のセル内ボタン群を縦並びに */
+#item-table .action-buttons {
+  display: flex;
+  flex-direction: column;  /* 縦に並べる */
+  gap: 6px;                /* ボタン間の余白 */
+  align-items: stretch;    /* 横幅を揃える */
+}
+
+/* 一覧用ボタンとリンクの共通デザイン */
+#item-table button,
+#item-table .link-button {
+  display: block;
+  width: 100%;               /* セル幅いっぱい */
+  box-sizing: border-box;
+  font-size: 16px;
+  padding: 6px;
+  text-align: center;
+  border-radius: 5px
+
 
 /* --- テーブル & 一覧・カレンダー --- */
 table {
@@ -168,4 +187,5 @@ td {
     display: inline-block;
     border-radius: 4px;
 }
+
 
