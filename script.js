@@ -1,365 +1,385 @@
-let itemList = JSON.parse(localStorage.getItem("items")) || [];
-let editingIndex = null;
-console.log("ほぼ完成（日付ソート実装版）")
+// DOM読み込み完了後にスクリプトを実行
+document.addEventListener('DOMContentLoaded', () => {
+  console.log("バージョン 4.1 (Alert on list view)");
 
-function saveItem() {
-  const name    = document.getElementById("item-name").value;
-  const year    = parseInt(document.getElementById("year").value);
-  const month   = parseInt(document.getElementById("month").value);
-  const day     = parseInt(document.getElementById("day").value);
-  const genre   = document.getElementById("genre").value;
-  const area    = document.getElementById("area").value;
-  const remarks = document.getElementById("remarks").value;   
+  // --- 定数定義 ---
+  const EXPIRATION_THRESHOLD_DAYS = 7; // 期限が近いと判断する日数
 
-  if (!name || !isValidDate(year, month, day)) {
-    alert("正しい入力をしてください！");
-    return;
-  }
-
-  const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  const newItem = { name, date: dateStr, genre, area, remarks };
-
-  if (editingIndex !== null) {
-    itemList[editingIndex] = newItem;
-    editingIndex = null;
-  } else {
-    itemList.push(newItem);
-  }
-
-  saveToLocal();
-  renderList();
-  showList();
-  clearForm();
-}
-
-function isValidDate(y, m, d) {
-  const date = new Date(y, m - 1, d);
-  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
-}
-
-function saveToLocal() {
-  localStorage.setItem("items", JSON.stringify(itemList));
-}
-// 並び替え専用関数
-function sortItems(order = "asc") {
-  if (order === "asc") {
-    itemList.sort((a, b) => new Date(a.date) - new Date(b.date)); // 期限が近い順
-  } else {
-    itemList.sort((a, b) => new Date(b.date) - new Date(a.date)); // 期限が遠い順
-  }
-  renderList(); // 並び替えた結果を再描画
-}
-
-
-function renderList() {
+  // --- DOM要素の取得 ---
+  const screens = {
+    input: document.getElementById('input-screen'),
+    list: document.getElementById('list-screen'),
+    calendar: document.getElementById('calendar-screen'),
+  };
+  const form = document.getElementById('input-form');
+  const elements = {
+    name: document.getElementById('item-name'),
+    year: document.getElementById('year'),
+    month: document.getElementById('month'),
+    day: document.getElementById('day'),
+    genre: document.getElementById('genre'),
+    area: document.getElementById('area'),
+    remarks: document.getElementById('remarks'),
+  };
+  const listTableBody = document.querySelector('#item-table tbody');
+  const calendarTableBody = document.querySelector('#calendar-table tbody');
+  const calendarMonthLabel = document.getElementById('calendar-month');
   
-  const table = document.getElementById("item-table");
-  table.innerHTML = "<tr><th>名前</th><th>賞味期限</th><th>ジャンル</th><th>保管場所</th><th>備考</th><th>操作</th><th>レシピ検索</th></tr>";
+  const genreFilter = document.getElementById('genre-filter');
+  const areaFilter = document.getElementById('area-filter');
+  const sortSelect = document.getElementById('sort-select');
 
-  const genreFilter = document.getElementById("genre-filter").value;
-  const areaFilter = document.getElementById("filter-area").value;
+  // --- アプリケーションの状態 ---
+  let itemList = JSON.parse(localStorage.getItem("items")) || [];
+  let editingIndex = null;
+  let currentMonthOffset = 0;
 
-itemList.forEach((item, index) => {
-  if ((genreFilter !== "すべて" && item.genre !== genreFilter) || (areaFilter && item.area !== areaFilter)) {
-    return;
-  }
+  // --- ヘルパー関数 ---
+  /**
+   * 日付文字列から期限の状態を判定
+   * @param {string} dateStr - 'YYYY-MM-DD'形式の日付文字列
+   * @returns {{diffDays: number, isExpired: boolean, isUpcoming: boolean, color: string}}
+   */
+  const getExpirationStatus = (dateStr) => {
+    const itemDate = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // 時刻をリセットして日付のみで比較
 
-  const [y, m, d] = item.date.split("-").map(Number);
-  const itemDate = new Date(y, m - 1, d);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const diffDays = Math.floor((itemDate - today) / (1000 * 60 * 60 * 24));
-    let color = "black";
-    if (itemDate < today) {
-      color = "red"; // 期限切れ
-    } else if (diffDays <= 7) {
-    color = "orange"; // 黄色（期限近い）
+    const diffDays = Math.floor((itemDate - today) / (1000 * 60 * 60 * 24));
+    const isExpired = itemDate < today;
+    const isUpcoming = !isExpired && diffDays <= EXPIRATION_THRESHOLD_DAYS;
+
+    let color = 'black';
+    if (isExpired) color = 'red';
+    else if (isUpcoming) color = 'orange';
+
+    return { diffDays, isExpired, isUpcoming, color };
+  };
+  
+  /**
+   * ローカルストレージにデータを保存
+   */
+  const saveToLocal = () => {
+    localStorage.setItem("items", JSON.stringify(itemList));
+  };
+  
+  /**
+   * 指定された画面を表示し、他を非表示にする
+   * @param {string} screenKey - 'input', 'list', 'calendar' のいずれか
+   */
+  const switchScreen = (screenKey) => {
+    Object.keys(screens).forEach(key => {
+      screens[key].classList.toggle('hidden', key !== screenKey);
+    });
+  };
+
+  /**
+   * 期限切れ・期限間近アイテムをアラートで通知する関数
+   */
+  const showAlertForExpiredItems = () => {
+    const expired = itemList.filter(item => getExpirationStatus(item.date).isExpired);
+    const upcoming = itemList.filter(item => getExpirationStatus(item.date).isUpcoming);
+    
+    if (expired.length > 0 || upcoming.length > 0) {
+        let msg = "⚠ 期限に注意が必要な食品があります\n\n";
+        if (expired.length > 0) {
+            msg += "【期限切れ】\n" + expired.map(i => `${i.name}（${i.date}）`).join("\n") + "\n\n";
+        }
+        if (upcoming.length > 0) {
+            msg += "【期限が近い】\n" + upcoming.map(i => `${i.name}（${i.date}）`).join("\n");
+        }
+        alert(msg);
+    }
+  };
+
+
+  // --- 日付セレクタ関連 ---
+  /**
+   * 年月日に合わせて日セレクタを更新
+   */
+  const updateDaySelector = () => {
+    const year = parseInt(elements.year.value);
+    const month = parseInt(elements.month.value);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const currentDay = elements.day.value;
+
+    elements.day.innerHTML = "";
+    for (let d = 1; d <= daysInMonth; d++) {
+      const option = new Option(d, d);
+      elements.day.appendChild(option);
+    }
+    // 以前選択していた日が存在すれば再選択
+    if (currentDay <= daysInMonth) {
+      elements.day.value = currentDay;
+    }
+  };
+  
+  /**
+   * 日付セレクタを初期化
+   */
+  const initDateSelectors = () => {
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear; y <= currentYear + 10; y++) {
+      elements.year.add(new Option(y, y));
+    }
+    for (let m = 1; m <= 12; m++) {
+      elements.month.add(new Option(m, m));
+    }
+    elements.year.value = currentYear;
+    elements.month.value = new Date().getMonth() + 1;
+    updateDaySelector();
+  };
+
+  // --- データ操作と描画 ---
+  /**
+   * フォームをクリア
+   */
+  const clearForm = () => {
+    form.reset();
+    initDateSelectors(); // 日付を現在にリセット
+    editingIndex = null;
+  };
+  
+  /**
+   * アイテムを保存または更新
+   */
+  const saveItem = (event) => {
+    event.preventDefault(); // フォームのデフォルト送信をキャンセル
+    const { name, year, month, day, genre, area, remarks } = elements;
+    const date = new Date(year.value, month.value - 1, day.value);
+
+    if (!name.value || date.getFullYear() !== parseInt(year.value)) {
+      alert("正しい入力をしてください！");
+      return;
     }
 
-  const isDanger = itemDate < today || (diffDays >= 0 && diffDays <= 7);
-  const style = isDanger ? " style='color:red;'" : "";
+    const newItem = {
+      name: name.value,
+      date: `${year.value}-${String(month.value).padStart(2, "0")}-${String(day.value).padStart(2, "0")}`,
+      genre: genre.value,
+      area: area.value,
+      remarks: remarks.value
+    };
 
-  const row = `<tr>
-    <td style="color: ${color}">${item.name}</td>
-    <td style="color: ${color}">${item.date}</td>
-    <td style="color: ${color}">${item.genre}</td>
-    <td style="color: ${color}">${item.area}</td>
-    <td style="color: ${color}">${item.remarks || ""}</td>
-    <td>
-      <button onclick="editItem(${index})">編集</button>
-      <button onclick="deleteItem(${index})">削除</button>
-    </td>
-    <td><a href="https://cookpad.com/jp/search/${item.name}" target="_blank" class="link-button">クックパッドで${item.name}を検索</a><br>
-        <a href="https://www.kurashiru.com/search?query=${item.name}" target="_blank" class="link-button">クラシルで${item.name}を検索</a>
-    </td>
-  </tr>`;
-  table.innerHTML += row;
-});
-
-
-  displayUpcomingExpirations();
-}
-function goToPage(url) {
-  wwindow.open(url, '_blank')
-}
-
-function filterList() {
-  renderList();
-}
-
-function deleteItem(index) {
-  if (confirm("本当に削除しますか？")) {
-    itemList.splice(index, 1);
+    if (editingIndex !== null) {
+      itemList[editingIndex] = newItem;
+    } else {
+      itemList.push(newItem);
+    }
+    
     saveToLocal();
     renderList();
-  }
-}
-
-function editItem(index) {
-  const item = itemList[index];
-  const [y, m, d] = item.date.split("-").map(Number);
-
-  document.getElementById("item-name").value = item.name;
-  document.getElementById("year").value = y;
-  document.getElementById("month").value = m;
-  updateDaysInSelector(y, m);
-  document.getElementById("day").value = d;
-  document.getElementById("genre").value = item.genre;
-  document.getElementById("area").value = item.area;
-  document.getElementById("remarks").value = item.remarks || "";
-
-  editingIndex = index;
-  showInput(true);
-}
-
-function showList() {
-  document.getElementById("input-screen").style.display = "none";
-  document.getElementById("calendar-screen").style.display = "none";
-  document.getElementById("list-screen").style.display = "block";
-  renderList();
-
-  // アラート表示用：期限チェック
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const expired = [];
-  const upcoming = [];
-
-  itemList.forEach(item => {
-    const [y, m, d] = item.date.split("-").map(Number);
-    const itemDate = new Date(y, m - 1, d);
-    const diffDays = Math.floor((itemDate - today) / (1000 * 60 * 60 * 24));
-
-    if (itemDate < today) {
-      expired.push(`${item.name}（${item.date}）`);
-    } else if (diffDays >= 0 && diffDays <= 7) {
-      upcoming.push(`${item.name}（${item.date}）`);
-    }
-  });
-
-  if (expired.length > 0 || upcoming.length > 0) {
-    let msg = "⚠ 期限に注意が必要な食品：\n\n";
-    if (expired.length > 0) {
-      msg += "【期限切れ】\n" + expired.join("\n") + "\n\n";
-    }
-    if (upcoming.length > 0) {
-      msg += "【期限が近い】\n" + upcoming.join("\n");
-    }
-    alert(msg);
-  }
-}
-
-
-
-function showInput(isEdit = false) {
-  document.getElementById("input-screen").style.display = "block";
-  document.getElementById("list-screen").style.display = "none";
-  document.getElementById("calendar-screen").style.display = "none";
-  if (!isEdit) {
+    switchScreen('list');
+    showAlertForExpiredItems(); // 保存後、一覧表示時にアラート
     clearForm();
-  }
-}
-
-function clearForm() {
-  document.getElementById("item-name").value = "";
-  document.getElementById("year").value = "2025";
-  document.getElementById("month").value = "1";
-  document.getElementById("day").value = "1";
-  document.getElementById("genre").value = "調味料";
-  document.getElementById("area").value = "冷蔵室";
-  document.getElementById("remarks").value = "";
-}
-
-function initDateSelectors() {
-  const yearSel = document.getElementById("year");
-  const monthSel = document.getElementById("month");
-  const daySel = document.getElementById("day");
-
-  const currentYear = new Date().getFullYear();
-  for (let y = currentYear; y <= currentYear + 10; y++) {
-    const option = document.createElement("option");
-    option.value = option.textContent = y;
-    yearSel.appendChild(option);
-  }
-
-  for (let m = 1; m <= 12; m++) {
-    const option = document.createElement("option");
-    option.value = option.textContent = m;
-    monthSel.appendChild(option);
-  }
-
-  function updateDays() {
-    const year = parseInt(yearSel.value);
-    const month = parseInt(monthSel.value);
-    const daysInMonth = new Date(year, month, 0).getDate();
-
-    daySel.innerHTML = "";
-    for (let d = 1; d <= daysInMonth; d++) {
-      const option = document.createElement("option");
-      option.value = option.textContent = d;
-      daySel.appendChild(option);
+  };
+  
+  /**
+   * アイテムを削除
+   */
+  const deleteItem = (index) => {
+    if (confirm("本当に削除しますか？")) {
+      itemList.splice(index, 1);
+      saveToLocal();
+      renderList();
     }
-  }
-
-  yearSel.addEventListener("change", updateDays);
-  monthSel.addEventListener("change", updateDays);
-
-  yearSel.value = currentYear;
-  monthSel.value = 1;
-  updateDays();
-}
-
-function updateDaysInSelector(year, month) {
-  const daySel = document.getElementById("day");
-  const daysInMonth = new Date(year, month, 0).getDate();
-  daySel.innerHTML = "";
-  for (let d = 1; d <= daysInMonth; d++) {
-    const option = document.createElement("option");
-    option.value = option.textContent = d;
-    daySel.appendChild(option);
-  }
-}
-
-function displayUpcomingExpirations() {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  const expiredItems = itemList.filter(item => {
+  };
+  
+  /**
+   * アイテムを編集フォームに読み込む
+   */
+  const editItem = (index) => {
+    const item = itemList[index];
     const [y, m, d] = item.date.split("-").map(Number);
-    const itemDate = new Date(y, m - 1, d);
-    return itemDate < today;
-  });
 
-  const upcomingItems = itemList.filter(item => {
-    const [y, m, d] = item.date.split("-").map(Number);
-    const itemDate = new Date(y, m - 1, d);
-    const diffDays = Math.floor((itemDate - today) / (1000 * 60 * 60 * 24));
-    return diffDays >= 0 && diffDays <= 7;
-  });
+    elements.name.value = item.name;
+    elements.year.value = y;
+    elements.month.value = m;
+    updateDaySelector();
+    elements.day.value = d;
+    elements.genre.value = item.genre;
+    elements.area.value = item.area;
+    elements.remarks.value = item.remarks || "";
 
-  // 既存の通知ボックス削除
-  document.querySelectorAll(".notice-box").forEach(el => el.remove());
+    editingIndex = index;
+    switchScreen('input');
+  };
+  
+  /**
+   * アイテム一覧をフィルタリングして描画
+   */
+  const renderList = () => {
+    const genre = genreFilter.value;
+    const area = areaFilter.value;
+    const sortOrder = sortSelect.value;
+    
+    // フィルタリング
+    let filteredItems = itemList.filter(item => 
+      (genre === "すべて" || item.genre === genre) &&
+      (area === "すべて" || item.area === area)
+    );
 
-  if (expiredItems.length > 0 || upcomingItems.length > 0) {
-    const box = document.createElement("div");
-    box.className = "notice-box";
-    box.style.background = "#fff8c4";
-    box.style.border = "1px solid #ccc";
-    box.style.padding = "10px";
-    box.style.margin = "10px 0";
+    // ソート
+    filteredItems.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return sortOrder === 'asc' ? dateA - dateB : dateB - a;
+    });
 
-    let html = "";
-    if (expiredItems.length > 0) {
-      html += "<strong>期限切れ:</strong><ul style='margin-top: 5px;'>" +
-        expiredItems.map(item => `<li>${item.name}（${item.date}）</li>`).join("") +
-        "</ul>";
-    }
-    if (upcomingItems.length > 0) {
-      html += "<strong>期限が近い:</strong><ul style='margin-top: 5px;'>" +
-        upcomingItems.map(item => `<li>${item.name}（${item.date}）</li>`).join("") +
-        "</ul>";
-    }
-    box.innerHTML = html;
-
-    // 一覧画面にも、入力画面にも入れる
-    document.getElementById("list-screen").insertBefore(box.cloneNode(true), document.getElementById("list-screen").firstChild);
-    document.getElementById("input-screen").insertBefore(box, document.getElementById("input-screen").firstChild);
-  }
-}
-let currentMonthOffset = 0;
-
-  function showCalendar() {
-    document.getElementById("input-screen").style.display = "none";
-    document.getElementById("list-screen").style.display = "none";
-    document.getElementById("calendar-screen").style.display = "block";
-    renderCalendar();
-  }
-
-  function changeMonth(offset) {
-    currentMonthOffset += offset;
-    renderCalendar();
-  }
-
-  function renderCalendar() {
-    const table = document.getElementById("calendar-table");
-    const monthLabel = document.getElementById("calendar-month");
+    // 描画
+    listTableBody.innerHTML = "";
+    const fragment = document.createDocumentFragment();
+    filteredItems.forEach((item, originalIndex) => {
+      const { color } = getExpirationStatus(item.date);
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td style="color: ${color}">${item.name}</td>
+        <td style="color: ${color}">${item.date}</td>
+        <td style="color: ${color}">${item.genre}</td>
+        <td style="color: ${color}">${item.area}</td>
+        <td style="color: ${color}">${item.remarks || ""}</td>
+        <td>
+          <button class="edit-btn" data-index="${itemList.indexOf(item)}">編集</button>
+          <button class="delete-btn" data-index="${itemList.indexOf(item)}">削除</button>
+        </td>
+        <td>
+          <a href="https://cookpad.com/jp/search/${item.name}" target="_blank" class="link-button">クックパッド</a>
+          <a href="https://www.kurashiru.com/search?query=${item.name}" target="_blank" class="link-button">クラシル</a>
+        </td>
+      `;
+      fragment.appendChild(row);
+    });
+    listTableBody.appendChild(fragment);
+    displayUpcomingExpirations();
+  };
+  
+  /**
+   * カレンダーを描画
+   */
+  const renderCalendar = () => {
     const now = new Date();
     const viewDate = new Date(now.getFullYear(), now.getMonth() + currentMonthOffset, 1);
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
 
-    monthLabel.textContent = `${year}年 ${month + 1}月`;
+    calendarMonthLabel.textContent = `${year}年 ${month + 1}月`;
 
-    const firstDay = new Date(year, month, 1).getDay();
+    const firstDayOfWeek = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    table.innerHTML = "<tr><th>日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th></tr>";
-
-    let row = "<tr>";
-    for (let i = 0; i < firstDay; i++) row += "<td></td>";
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const items = itemList.filter(item => item.date === dateStr);
-
-      let isDanger = false;
-      let cellContent = `<strong>${d}</strong>`;
-      if (items.length > 0) {
-        cellContent += `<ul style='padding-left: 1em;'>`;
-        items.forEach(item => {
-          const [y, m, da] = item.date.split("-").map(Number);
-          const itemDate = new Date(y, m - 1, da);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const diffDays = Math.floor((itemDate - today) / (1000 * 60 * 60 * 24));
-          const itemIsExpired = itemDate < today;
-const itemIsUpcoming = !itemIsExpired && diffDays <= 7;
-
-let color = "black";
-if (itemIsExpired) color = "red";
-else if (itemIsUpcoming) color = "#f1c40f";
-
-cellContent += `<li style='font-size: 20px; color:${color};'>${item.name}</li>`;
-
-        });
-        cellContent += `</ul>`;
-      }
-
-      const cellStyle = isDanger ? " style='background-color: #ffd6d6;'" : "";
-      row += `<td${cellStyle}><div class="calendar-cell">${cellContent}</div></td>`;
-      if ((firstDay + d) % 7 === 0) {
-        row += "</tr><tr>";
-      }
+    
+    calendarTableBody.innerHTML = "";
+    const fragment = document.createDocumentFragment();
+    let row = document.createElement('tr');
+    
+    for (let i = 0; i < firstDayOfWeek; i++) {
+        row.appendChild(document.createElement('td'));
     }
 
-    row += "</tr>";
-    table.innerHTML += row;
-  }
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const itemsOnDate = itemList.filter(item => item.date === dateStr);
+        
+        const cell = document.createElement('td');
+        cell.innerHTML = `<div class="calendar-cell"><strong>${d}</strong></div>`;
 
+        if (itemsOnDate.length > 0) {
+            const ul = document.createElement('ul');
+            itemsOnDate.forEach(item => {
+                const { color } = getExpirationStatus(item.date);
+                const li = document.createElement('li');
+                li.textContent = item.name;
+                li.style.color = color;
+                ul.appendChild(li);
+            });
+            cell.querySelector('.calendar-cell').appendChild(ul);
+        }
+        row.appendChild(cell);
 
-window.onload = function () {
-  initDateSelectors();
-  renderList();
-  displayUpcomingExpirations(); // ← 入力画面用にも呼び出し
-};
+        if ((firstDayOfWeek + d) % 7 === 0 || d === daysInMonth) {
+            fragment.appendChild(row);
+            if (d !== daysInMonth) {
+                row = document.createElement('tr');
+            }
+        }
+    }
+    calendarTableBody.appendChild(fragment);
+  };
 
+  /**
+   * 期限切れ・期限間近のアイテムを通知(画面上部)
+   */
+  const displayUpcomingExpirations = () => {
+    const expiredItems = itemList.filter(item => getExpirationStatus(item.date).isExpired);
+    const upcomingItems = itemList.filter(item => getExpirationStatus(item.date).isUpcoming);
+
+    document.querySelectorAll(".notice-container").forEach(el => el.innerHTML = "");
+
+    if (expiredItems.length > 0 || upcomingItems.length > 0) {
+      const box = document.createElement("div");
+      box.className = "notice-box";
+      let html = "";
+      if (expiredItems.length > 0) {
+        html += "<strong>期限切れ:</strong><ul>" + expiredItems.map(item => `<li>${item.name}（${item.date}）</li>`).join("") + "</ul>";
+      }
+      if (upcomingItems.length > 0) {
+        html += "<strong>期限が近い:</strong><ul>" + upcomingItems.map(item => `<li>${item.name}（${item.date}）</li>`).join("") + "</ul>";
+      }
+      box.innerHTML = html;
+
+      screens.input.querySelector('.notice-container').appendChild(box.cloneNode(true));
+      screens.list.querySelector('.notice-container').appendChild(box);
+    }
+  };
+
+  // --- イベントリスナーの設定 ---
+  form.addEventListener('submit', saveItem);
+  elements.year.addEventListener('change', updateDaySelector);
+  elements.month.addEventListener('change', updateDaySelector);
+
+  document.getElementById('show-list-btn').addEventListener('click', () => {
+    renderList();
+    switchScreen('list');
+    showAlertForExpiredItems(); // ★一覧表示時にもアラートを呼び出す
+  });
+  
+  document.getElementById('show-calendar-btn').addEventListener('click', () => {
+      renderCalendar();
+      switchScreen('calendar');
+  });
+
+  document.querySelectorAll('.back-to-input-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchScreen('input'));
+  });
+
+  [genreFilter, areaFilter, sortSelect].forEach(el => el.addEventListener('change', renderList));
+
+  listTableBody.addEventListener('click', (e) => {
+    const target = e.target;
+    if (target.classList.contains('edit-btn')) {
+      editItem(Number(target.dataset.index));
+    }
+    if (target.classList.contains('delete-btn')) {
+      deleteItem(Number(target.dataset.index));
+    }
+  });
+
+  document.getElementById('prev-month-btn').addEventListener('click', () => {
+    currentMonthOffset--;
+    renderCalendar();
+  });
+
+  document.getElementById('next-month-btn').addEventListener('click', () => {
+    currentMonthOffset++;
+    renderCalendar();
+  });
+
+  // --- 初期化処理 ---
+  const initialize = () => {
+    initDateSelectors();
+    renderList();
+    displayUpcomingExpirations();
+    showAlertForExpiredItems(); // ★起動時にもアラートを呼び出す
+  };
+
+  initialize();
+});
