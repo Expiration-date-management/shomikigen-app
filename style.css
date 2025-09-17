@@ -95,16 +95,52 @@ button:hover, .link-button:hover {
   align-items: stretch;    /* 横幅を揃える */
 }
 
-/* 一覧用ボタンとリンクの共通デザイン */
+/* 表全体を横スクロール可能にするラッパー */
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* スマホでスムーズスクロール */
+}
+
+/* 表の横スクロール対応 */
+#item-table {
+  width: 100%;
+  min-width: 800px; /* 横スクロールが効くよう最低幅を確保 */
+  border-collapse: collapse;
+  background-color: rgba(255, 255, 255, 0.7); /* 元のデザイン維持 */
+  margin-top: 10px;
+  white-space: nowrap; /* 折り返さず横並び */
+}
+
+#item-table th,
+#item-table td {
+  font-size: 16px;
+  padding: 8px;
+  border: 1px solid rgb(0,0,0);
+  text-align: center;
+  vertical-align: top;
+}
+
+/* アクションボタン縦並び */
+#item-table .action-buttons {
+  display: flex;
+  flex-direction: column; /* 縦に並べる */
+  gap: 6px; /* ボタン間の余白 */
+  align-items: stretch;
+  min-width: 120px; /* 幅が潰れすぎないよう調整 */
+}
+
+/* 一覧用ボタンとリンク共通 */
 #item-table button,
 #item-table .link-button {
   display: block;
-  width: 100%;               /* セル幅いっぱい */
+  width: 100%;
   box-sizing: border-box;
-  font-size: 16px;
+  font-size: 14px;
   padding: 6px;
+  border-radius: 5px;
   text-align: center;
-  border-radius: 5px
+}
+
 
 
 /* --- テーブル & 一覧・カレンダー --- */
@@ -187,5 +223,6 @@ td {
     display: inline-block;
     border-radius: 4px;
 }
+
 
 
