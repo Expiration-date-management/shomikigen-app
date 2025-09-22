@@ -290,4 +290,97 @@ document.addEventListener('DOMContentLoaded', () => {
                 const li = document.createElement('li');
                 li.textContent = item.name;
                 li.style.color = color;
-                ul
+                ul.appendChild(li);
+            });
+            cell.querySelector('.calendar-cell').appendChild(ul);
+        }
+        row.appendChild(cell);
+
+        if ((firstDayOfWeek + d) % 7 === 0 || d === daysInMonth) {
+            fragment.appendChild(row);
+            if (d !== daysInMonth) {
+                row = document.createElement('tr');
+            }
+        }
+    }
+    calendarTableBody.appendChild(fragment);
+  };
+
+  /**
+   * 期限切れ・期限間近のアイテムを通知(画面上部)
+   */
+  const displayUpcomingExpirations = () => {
+    const expiredItems = itemList.filter(item => getExpirationStatus(item.date).isExpired);
+    const upcomingItems = itemList.filter(item => getExpirationStatus(item.date).isUpcoming);
+
+    document.querySelectorAll(".notice-container").forEach(el => el.innerHTML = "");
+
+    if (expiredItems.length > 0 || upcomingItems.length > 0) {
+      const box = document.createElement("div");
+      box.className = "notice-box";
+      let html = "";
+      if (expiredItems.length > 0) {
+        html += "<strong>期限切れ:</strong><ul>" + expiredItems.map(item => `<li>${item.name}（${item.date}）</li>`).join("") + "</ul>";
+      }
+      if (upcomingItems.length > 0) {
+        html += "<strong>期限が近い:</strong><ul>" + upcomingItems.map(item => `<li>${item.name}（${item.date}）</li>`).join("") + "</ul>";
+      }
+      box.innerHTML = html;
+
+      screens.input.querySelector('.notice-container').appendChild(box.cloneNode(true));
+      screens.list.querySelector('.notice-container').appendChild(box);
+    }
+  };
+
+  // --- イベントリスナーの設定 ---
+  form.addEventListener('submit', saveItem);
+  elements.year.addEventListener('change', updateDaySelector);
+  elements.month.addEventListener('change', updateDaySelector);
+
+  document.getElementById('show-list-btn').addEventListener('click', () => {
+    renderList();
+    switchScreen('list');
+    showAlertForExpiredItems();
+  });
+  
+  document.getElementById('show-calendar-btn').addEventListener('click', () => {
+      renderCalendar();
+      switchScreen('calendar');
+  });
+
+  document.querySelectorAll('.back-to-input-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchScreen('input'));
+  });
+
+  [genreFilter, areaFilter, sortSelect].forEach(el => el.addEventListener('change', renderList));
+
+  listTableBody.addEventListener('click', (e) => {
+    const target = e.target;
+    if (target.classList.contains('edit-btn')) {
+      editItem(Number(target.dataset.index));
+    }
+    if (target.classList.contains('delete-btn')) {
+      deleteItem(Number(target.dataset.index));
+    }
+  });
+
+  document.getElementById('prev-month-btn').addEventListener('click', () => {
+    currentMonthOffset--;
+    renderCalendar();
+  });
+
+  document.getElementById('next-month-btn').addEventListener('click', () => {
+    currentMonthOffset++;
+    renderCalendar();
+  });
+
+  // --- 初期化処理 ---
+  const initialize = () => {
+    initDateSelectors();
+    renderList();
+    displayUpcomingExpirations();
+    showAlertForExpiredItems();
+  };
+
+  initialize();
+});
