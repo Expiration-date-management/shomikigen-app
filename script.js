@@ -1,6 +1,6 @@
 // DOM読み込み完了後にスクリプトを実行
 document.addEventListener('DOMContentLoaded', () => {
-  console.log("バージョン 5.0 (Backup/Restore Feature)");
+  console.log("バージョン 5.0 (バックアップと復元機能追加)");
 
   // --- 定数定義 ---
   const EXPIRATION_THRESHOLD_DAYS = 7;
@@ -414,3 +414,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initialize();
 });
+
