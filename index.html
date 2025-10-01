@@ -111,9 +111,16 @@
       <tbody></tbody>
     </table>
     <br>
-    <button id="show-calendar-btn">カレンダー表示</button>
-    <button class="back-to-input-btn">戻る</button>
-  </div>
+    <div class="action-buttons">
+        <button id="show-calendar-btn">カレンダー表示</button>
+        <button class="back-to-input-btn">戻る</button>
+        <hr style="margin: 20px 0;">
+        <p>
+        <button id="export-btn">データのバックアップを取る</button>
+        <label for="import-file" class="button-like-label">データを復元する</label>
+        <input type="file" id="import-file" accept=".json" style="display: none;">
+    </div>
+    </div>
 
   <div id="calendar-screen" class="hidden">
     <h2>カレンダー表示</h2>
@@ -131,7 +138,29 @@
     <button class="back-to-input-btn">戻る</button>
   </div>
 
+  <style>
+    .button-like-label {
+      display: inline-block;
+      padding: 8px 14px;
+      font-size: 20px;
+      font-family: inherit;
+      background-color: rgb(244, 225, 19);
+      color: black;
+      border: 2px solid rgb(100, 94, 26);
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .button-like-label:hover {
+      background-color: rgb(185, 171, 13);
+    }
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+  </style>
+
   <script src="script.js"></script>
 </body>
 </html>
-
