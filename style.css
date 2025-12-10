@@ -1,7 +1,7 @@
 /* --- 基本スタイル --- */
 body {
   font-family: "UD デジタル 教科書体 NK-R", "Noto Sans JP","ヒラギノ丸ゴ ProN", sans-serif;
-  font-size: 20px;
+  font-size: 40px;
   margin: 20px;
   background-image: url('back_ground_image_smartphone.png');
   background-color: rgba(0, 0, 0, 0.3);
@@ -13,8 +13,8 @@ body {
 }
 
 h1 {
-  font-size: 40px;
-  border: 2px solid rgb(0, 0, 0);
+  font-size: 35px;
+  border: 3px solid rgb(0, 0, 0);
   background-color: rgba(255, 255, 255, 0.7);
   width: fit-content;
   padding: 5px 10px;
@@ -22,7 +22,7 @@ h1 {
 
 h2 {
   font-size: 30px;
-  border: 1px solid rgb(0,0,0);
+  border: 3px solid rgb(0,0,0);
   background-color: rgba(255, 255, 255, 0.7);
   width: fit-content;
   padding: 5px 10px;
@@ -53,17 +53,17 @@ input[type="text"], select {
   padding: 0.3em;
   box-sizing: border-box;
   background-color: rgb(255, 255, 255);
-  border: 1px solid rgba(0, 0, 0, 0.7);
+  border: 2px solid rgba(0, 0, 0, 0.7);
   border-radius: 4px;
 }
 
 /* --- ボタン --- */
 button, .link-button {
   font-family: inherit;
-  font-size: 20px;
+  font-size: 40px;
   background-color: rgb(244, 225, 19);
   color: black;
-  border: 2px solid rgb(100, 94, 26);
+  border: 3px solid rgb(100, 94, 26);
   padding: 8px 14px;
   border-radius: 5px;
   cursor: pointer;
@@ -91,7 +91,7 @@ button:hover, .link-button:hover {
 #item-table .action-buttons {
   display: flex;
   flex-direction: column;  /* 縦に並べる */
-  gap: 6px;                /* ボタン間の余白 */
+  gap: 7px;                /* ボタン間の余白 */
   align-items: stretch;    /* 横幅を揃える */
 }
 
@@ -113,9 +113,9 @@ button:hover, .link-button:hover {
 
 #item-table th,
 #item-table td {
-  font-size: 16px;
+  font-size: 30px;
   padding: 8px;
-  border: 1px solid rgb(0,0,0);
+  border: 2px solid rgb(0,0,0);
   text-align: center;
   vertical-align: top;
 }
@@ -124,7 +124,7 @@ button:hover, .link-button:hover {
 #item-table .action-buttons {
   display: flex;
   flex-direction: column; /* 縦に並べる */
-  gap: 6px; /* ボタン間の余白 */
+  gap: 10px; /* ボタン間の余白 */
   align-items: stretch;
   min-width: 120px; /* 幅が潰れすぎないよう調整 */
 }
@@ -135,8 +135,8 @@ button:hover, .link-button:hover {
   display: block;
   width: 100%;
   box-sizing: border-box;
-  font-size: 14px;
-  padding: 6px;
+  font-size: 25px;
+  padding: 8px;
   border-radius: 5px;
   text-align: center;
 }
@@ -158,11 +158,11 @@ th, td {
 }
 
 th {
-  font-size: 20px;
+  font-size: 30px;
 }
 
 td {
-  font-size: 20px;
+  font-size: 30px;
   -webkit-text-stroke: 0.5px rgba(165, 42, 42, 0.5);
 }
 
@@ -177,7 +177,7 @@ td {
 }
 
 #calendar-table li {
-    font-size: 18px;
+    font-size: 25px;
 }
 
 .filters {
@@ -217,13 +217,12 @@ td {
   padding-left: 20px;
 }
 .contact-info {
-    font-size: 16px;
+    font-size: 30px;
     background-color: rgba(255, 255, 255, 0.7);
     padding: 5px;
     display: inline-block;
     border-radius: 4px;
 }
-
 
 
 
