@@ -1,9 +1,9 @@
 // DOM読み込み完了後にスクリプトを実行
 document.addEventListener('DOMContentLoaded', () => {
-  console.log("バージョン 5.0 (バックアップと復元機能追加)");
+  console.log("バージョン 4.2 (Sort fix)");
 
   // --- 定数定義 ---
-  const EXPIRATION_THRESHOLD_DAYS = 7;
+  const EXPIRATION_THRESHOLD_DAYS = 7; // 期限が近いと判断する日数
 
   // --- DOM要素の取得 ---
   const screens = {
@@ -28,11 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const genreFilter = document.getElementById('genre-filter');
   const areaFilter = document.getElementById('area-filter');
   const sortSelect = document.getElementById('sort-select');
-  
-  // ★バックアップ・復元用のDOM要素
-  const exportBtn = document.getElementById('export-btn');
-  const importFile = document.getElementById('import-file');
-
 
   // --- アプリケーションの状態 ---
   let itemList = JSON.parse(localStorage.getItem("items")) || [];
@@ -40,10 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentMonthOffset = 0;
 
   // --- ヘルパー関数 ---
+  /**
+   * 日付文字列から期限の状態を判定
+   * @param {string} dateStr - 'YYYY-MM-DD'形式の日付文字列
+   * @returns {{diffDays: number, isExpired: boolean, isUpcoming: boolean, color: string}}
+   */
   const getExpirationStatus = (dateStr) => {
     const itemDate = new Date(dateStr);
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0); // 時刻をリセットして日付のみで比較
 
     const diffDays = Math.floor((itemDate - today) / (1000 * 60 * 60 * 24));
     const isExpired = itemDate < today;
@@ -56,16 +56,26 @@ document.addEventListener('DOMContentLoaded', () => {
     return { diffDays, isExpired, isUpcoming, color };
   };
   
+  /**
+   * ローカルストレージにデータを保存
+   */
   const saveToLocal = () => {
     localStorage.setItem("items", JSON.stringify(itemList));
   };
   
+  /**
+   * 指定された画面を表示し、他を非表示にする
+   * @param {string} screenKey - 'input', 'list', 'calendar' のいずれか
+   */
   const switchScreen = (screenKey) => {
     Object.keys(screens).forEach(key => {
       screens[key].classList.toggle('hidden', key !== screenKey);
     });
   };
 
+  /**
+   * 期限切れ・期限間近アイテムをアラートで通知する関数
+   */
   const showAlertForExpiredItems = () => {
     const expired = itemList.filter(item => getExpirationStatus(item.date).isExpired);
     const upcoming = itemList.filter(item => getExpirationStatus(item.date).isUpcoming);
@@ -82,7 +92,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+
   // --- 日付セレクタ関連 ---
+  /**
+   * 年月日に合わせて日セレクタを更新
+   */
   const updateDaySelector = () => {
     const year = parseInt(elements.year.value);
     const month = parseInt(elements.month.value);
@@ -91,13 +105,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     elements.day.innerHTML = "";
     for (let d = 1; d <= daysInMonth; d++) {
-      elements.day.appendChild(new Option(d, d));
+      const option = new Option(d, d);
+      elements.day.appendChild(option);
     }
+    // 以前選択していた日が存在すれば再選択
     if (currentDay <= daysInMonth) {
       elements.day.value = currentDay;
     }
   };
   
+  /**
+   * 日付セレクタを初期化
+   */
   const initDateSelectors = () => {
     const currentYear = new Date().getFullYear();
     for (let y = currentYear; y <= currentYear + 10; y++) {
@@ -111,85 +130,21 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDaySelector();
   };
 
-  // --- ★ここからバックアップ・復元機能 ---
-
-  /**
-   * データをJSONファイルとしてエクスポート（バックアップ）
-   */
-  const exportData = () => {
-    if (itemList.length === 0) {
-      alert('バックアップするデータがありません。');
-      return;
-    }
-
-    // データを読みやすく整形したJSON文字列に変換
-    const jsonString = JSON.stringify(itemList, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    
-    // ファイル名の生成 (例: shomikigen_backup_2025-10-01.json)
-    const today = new Date();
-    const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    a.download = `shomikigen_backup_${dateString}.json`;
-    
-    document.body.appendChild(a);
-    a.click();
-    
-    // 後片付け
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    alert('データをエクスポートしました。');
-  };
-
-  /**
-   * JSONファイルをインポートしてデータを復元
-   */
-  const importData = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const importedData = JSON.parse(e.target.result);
-        
-        // 簡単なデータ検証（配列であるか）
-        if (!Array.isArray(importedData)) {
-          throw new Error('無効なファイル形式です。');
-        }
-
-        if (confirm('現在のデータが上書きされます。よろしいですか？')) {
-          itemList = importedData;
-          saveToLocal();
-          renderList();
-          alert('データをインポートしました。');
-        }
-
-      } catch (error) {
-        alert('ファイルの読み込みに失敗しました。\n有効なJSONファイルを選択してください。');
-        console.error(error);
-      } finally {
-        // 同じファイルを再度選択できるように値をリセット
-        event.target.value = null;
-      }
-    };
-    reader.readAsText(file);
-  };
-
-
   // --- データ操作と描画 ---
+  /**
+   * フォームをクリア
+   */
   const clearForm = () => {
     form.reset();
-    initDateSelectors();
+    initDateSelectors(); // 日付を現在にリセット
     editingIndex = null;
   };
   
+  /**
+   * アイテムを保存または更新
+   */
   const saveItem = (event) => {
-    event.preventDefault();
+    event.preventDefault(); // フォームのデフォルト送信をキャンセル
     const { name, year, month, day, genre, area, remarks } = elements;
     const date = new Date(year.value, month.value - 1, day.value);
 
@@ -215,10 +170,13 @@ document.addEventListener('DOMContentLoaded', () => {
     saveToLocal();
     renderList();
     switchScreen('list');
-    showAlertForExpiredItems();
+    showAlertForExpiredItems(); // 保存後、一覧表示時にアラート
     clearForm();
   };
   
+  /**
+   * アイテムを削除
+   */
   const deleteItem = (index) => {
     if (confirm("本当に削除しますか？")) {
       itemList.splice(index, 1);
@@ -227,6 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
   
+  /**
+   * アイテムを編集フォームに読み込む
+   */
   const editItem = (index) => {
     const item = itemList[index];
     const [y, m, d] = item.date.split("-").map(Number);
@@ -244,25 +205,32 @@ document.addEventListener('DOMContentLoaded', () => {
     switchScreen('input');
   };
   
+  /**
+   * アイテム一覧をフィルタリングして描画
+   */
   const renderList = () => {
     const genre = genreFilter.value;
     const area = areaFilter.value;
     const sortOrder = sortSelect.value;
     
+    // フィルタリング
     let filteredItems = itemList.filter(item => 
       (genre === "すべて" || item.genre === genre) &&
       (area === "すべて" || item.area === area)
     );
 
+    // ソート
     filteredItems.sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
+        // ★修正箇所: `dateB - a` を `dateB - dateA` に修正
         return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
     });
 
+    // 描画
     listTableBody.innerHTML = "";
     const fragment = document.createDocumentFragment();
-    filteredItems.forEach((item) => {
+    filteredItems.forEach((item, originalIndex) => {
       const { color } = getExpirationStatus(item.date);
       const row = document.createElement('tr');
       row.innerHTML = `
@@ -286,6 +254,9 @@ document.addEventListener('DOMContentLoaded', () => {
     displayUpcomingExpirations();
   };
   
+  /**
+   * カレンダーを描画
+   */
   const renderCalendar = () => {
     const now = new Date();
     const viewDate = new Date(now.getFullYear(), now.getMonth() + currentMonthOffset, 1);
@@ -335,6 +306,9 @@ document.addEventListener('DOMContentLoaded', () => {
     calendarTableBody.appendChild(fragment);
   };
 
+  /**
+   * 期限切れ・期限間近のアイテムを通知(画面上部)
+   */
   const displayUpcomingExpirations = () => {
     const expiredItems = itemList.filter(item => getExpirationStatus(item.date).isExpired);
     const upcomingItems = itemList.filter(item => getExpirationStatus(item.date).isUpcoming);
@@ -399,10 +373,17 @@ document.addEventListener('DOMContentLoaded', () => {
     currentMonthOffset++;
     renderCalendar();
   });
-  
-  // ★バックアップ・復元ボタンのイベントリスナー
-  exportBtn.addEventListener('click', exportData);
-  importFile.addEventListener('change', importData);
+
+  // 修正箇所: データ復元ボタンのクリックイベント
+  const importBtn = document.getElementById('import-btn');
+  const importFile = document.getElementById('import-file');
+
+  if (importBtn && importFile) {
+      importBtn.addEventListener('click', () => {
+          importFile.click(); // 隠されている <input type="file"> をクリック
+      });
+  }
+
 
   // --- 初期化処理 ---
   const initialize = () => {
@@ -414,4 +395,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initialize();
 });
-
