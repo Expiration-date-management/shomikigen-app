@@ -1,228 +1,397 @@
-/* --- 基本スタイル --- */
-body {
-  font-family: "UD デジタル 教科書体 NK-R", "Noto Sans JP","ヒラギノ丸ゴ ProN", sans-serif;
-  font-size: 40px;
-  margin: 20px;
-  background-image: url('back_ground_image_smartphone.png');
-  background-color: rgba(0, 0, 0, 0.3);
-  background-blend-mode: multiply;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-attachment: fixed;
-}
+// DOM読み込み完了後にスクリプトを実行
+document.addEventListener('DOMContentLoaded', () => {
+  console.log("バージョン 4.2 (Sort fix)");
 
-h1 {
-  font-size: 35px;
-  border: 3px solid rgb(0, 0, 0);
-  background-color: rgba(255, 255, 255, 0.7);
-  width: fit-content;
-  padding: 5px 10px;
-}
+  // --- 定数定義 ---
+  const EXPIRATION_THRESHOLD_DAYS = 7; // 期限が近いと判断する日数
 
-h2 {
-  font-size: 30px;
-  border: 3px solid rgb(0,0,0);
-  background-color: rgba(255, 255, 255, 0.7);
-  width: fit-content;
-  padding: 5px 10px;
-}
+  // --- DOM要素の取得 ---
+  const screens = {
+    input: document.getElementById('input-screen'),
+    list: document.getElementById('list-screen'),
+    calendar: document.getElementById('calendar-screen'),
+  };
+  const form = document.getElementById('input-form');
+  const elements = {
+    name: document.getElementById('item-name'),
+    year: document.getElementById('year'),
+    month: document.getElementById('month'),
+    day: document.getElementById('day'),
+    genre: document.getElementById('genre'),
+    area: document.getElementById('area'),
+    remarks: document.getElementById('remarks'),
+  };
+  const listTableBody = document.querySelector('#item-table tbody');
+  const calendarTableBody = document.querySelector('#calendar-table tbody');
+  const calendarMonthLabel = document.getElementById('calendar-month');
+  
+  const genreFilter = document.getElementById('genre-filter');
+  const areaFilter = document.getElementById('area-filter');
+  const sortSelect = document.getElementById('sort-select');
 
-.hidden {
-  display: none !important;
-}
+  // --- アプリケーションの状態 ---
+  let itemList = JSON.parse(localStorage.getItem("items")) || [];
+  let editingIndex = null;
+  let currentMonthOffset = 0;
 
-/* --- フォームと入力要素 --- */
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1em;
-  padding: 1em;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 8px;
-}
+  // --- ヘルパー関数 ---
+  /**
+   * 日付文字列から期限の状態を判定
+   * @param {string} dateStr - 'YYYY-MM-DD'形式の日付文字列
+   * @returns {{diffDays: number, isExpired: boolean, isUpcoming: boolean, color: string}}
+   */
+  const getExpirationStatus = (dateStr) => {
+    const itemDate = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // 時刻をリセットして日付のみで比較
 
-form label {
-  font-size: 1.2em;
-  margin-bottom: 0.3em;
-}
+    const diffDays = Math.floor((itemDate - today) / (1000 * 60 * 60 * 24));
+    const isExpired = itemDate < today;
+    const isUpcoming = !isExpired && diffDays <= EXPIRATION_THRESHOLD_DAYS;
 
-input[type="text"], select {
-  font-family: inherit;
-  font-size: 1em;
-  padding: 0.3em;
-  box-sizing: border-box;
-  background-color: rgb(255, 255, 255);
-  border: 2px solid rgba(0, 0, 0, 0.7);
-  border-radius: 4px;
-}
+    let color = 'black';
+    if (isExpired) color = 'red';
+    else if (isUpcoming) color = 'orange';
 
-/* --- ボタン --- */
-button, .link-button {
-  font-family: inherit;
-  font-size: 40px;
-  background-color: rgb(244, 225, 19);
-  color: black;
-  border: 3px solid rgb(100, 94, 26);
-  padding: 8px 14px;
-  border-radius: 5px;
-  cursor: pointer;
-  text-decoration: none;
-  text-align: center;
-}
+    return { diffDays, isExpired, isUpcoming, color };
+  };
+  
+  /**
+   * ローカルストレージにデータを保存
+   */
+  const saveToLocal = () => {
+    localStorage.setItem("items", JSON.stringify(itemList));
+  };
+  
+  /**
+   * 指定された画面を表示し、他を非表示にする
+   * @param {string} screenKey - 'input', 'list', 'calendar' のいずれか
+   */
+  const switchScreen = (screenKey) => {
+    Object.keys(screens).forEach(key => {
+      screens[key].classList.toggle('hidden', key !== screenKey);
+    });
+  };
 
-button:hover, .link-button:hover {
-  background-color: rgb(185, 171, 13);
-}
-
-.button-group {
-  display: flex;
-  gap: 1em;
-  justify-content: center;
-  margin-top: 1em;
-}
-
-.button-group button {
-  flex: 1;
-  font-size: 1.2em;
-  padding: 0.8em;
-}
-/* 一覧表のセル内ボタン群を縦並びに */
-#item-table .action-buttons {
-  display: flex;
-  flex-direction: column;  /* 縦に並べる */
-  gap: 7px;                /* ボタン間の余白 */
-  align-items: stretch;    /* 横幅を揃える */
-}
-
-/* 表全体を横スクロール可能にするラッパー */
-.table-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch; /* スマホでスムーズスクロール */
-}
-
-/* 表の横スクロール対応 */
-#item-table {
-  width: 100%;
-  min-width: 800px; /* 横スクロールが効くよう最低幅を確保 */
-  border-collapse: collapse;
-  background-color: rgba(255, 255, 255, 0.7); /* 元のデザイン維持 */
-  margin-top: 10px;
-  white-space: nowrap; /* 折り返さず横並び */
-}
-
-#item-table th,
-#item-table td {
-  font-size: 30px;
-  padding: 8px;
-  border: 2px solid rgb(0,0,0);
-  text-align: center;
-  vertical-align: top;
-}
-
-/* アクションボタン縦並び */
-#item-table .action-buttons {
-  display: flex;
-  flex-direction: column; /* 縦に並べる */
-  gap: 10px; /* ボタン間の余白 */
-  align-items: stretch;
-  min-width: 120px; /* 幅が潰れすぎないよう調整 */
-}
-
-/* 一覧用ボタンとリンク共通 */
-#item-table button,
-#item-table .link-button {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  font-size: 25px;
-  padding: 8px;
-  border-radius: 5px;
-  text-align: center;
-}
+  /**
+   * 期限切れ・期限間近アイテムをアラートで通知する関数
+   */
+  const showAlertForExpiredItems = () => {
+    const expired = itemList.filter(item => getExpirationStatus(item.date).isExpired);
+    const upcoming = itemList.filter(item => getExpirationStatus(item.date).isUpcoming);
+    
+    if (expired.length > 0 || upcoming.length > 0) {
+        let msg = "⚠ 期限に注意が必要な食品があります\n\n";
+        if (expired.length > 0) {
+            msg += "【期限切れ】\n" + expired.map(i => `${i.name}（${i.date}）`).join("\n") + "\n\n";
+        }
+        if (upcoming.length > 0) {
+            msg += "【期限が近い】\n" + upcoming.map(i => `${i.name}（${i.date}）`).join("\n");
+        }
+        alert(msg);
+    }
+  };
 
 
+  // --- 日付セレクタ関連 ---
+  /**
+   * 年月日に合わせて日セレクタを更新
+   */
+  const updateDaySelector = () => {
+    const year = parseInt(elements.year.value);
+    const month = parseInt(elements.month.value);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const currentDay = elements.day.value;
 
-/* --- テーブル & 一覧・カレンダー --- */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-  background-color: rgba(255, 255, 255, 0.7);
-}
+    elements.day.innerHTML = "";
+    for (let d = 1; d <= daysInMonth; d++) {
+      const option = new Option(d, d);
+      elements.day.appendChild(option);
+    }
+    // 以前選択していた日が存在すれば再選択
+    if (currentDay <= daysInMonth) {
+      elements.day.value = currentDay;
+    }
+  };
+  
+  /**
+   * 日付セレクタを初期化
+   */
+  const initDateSelectors = () => {
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear; y <= currentYear + 10; y++) {
+      elements.year.add(new Option(y, y));
+    }
+    for (let m = 1; m <= 12; m++) {
+      elements.month.add(new Option(m, m));
+    }
+    elements.year.value = currentYear;
+    elements.month.value = new Date().getMonth() + 1;
+    updateDaySelector();
+  };
 
-th, td {
-  border: 1px solid rgb(0, 0, 0);
-  padding: 8px;
-  vertical-align: top;
-}
+  // --- データ操作と描画 ---
+  /**
+   * フォームをクリア
+   */
+  const clearForm = () => {
+    form.reset();
+    initDateSelectors(); // 日付を現在にリセット
+    editingIndex = null;
+  };
+  
+  /**
+   * アイテムを保存または更新
+   */
+  const saveItem = (event) => {
+    event.preventDefault(); // フォームのデフォルト送信をキャンセル
+    const { name, year, month, day, genre, area, remarks } = elements;
+    const date = new Date(year.value, month.value - 1, day.value);
 
-th {
-  font-size: 30px;
-}
+    if (!name.value || date.getFullYear() !== parseInt(year.value)) {
+      alert("正しい入力をしてください！");
+      return;
+    }
 
-td {
-  font-size: 30px;
-  -webkit-text-stroke: 0.5px rgba(165, 42, 42, 0.5);
-}
+    const newItem = {
+      name: name.value,
+      date: `${year.value}-${String(month.value).padStart(2, "0")}-${String(day.value).padStart(2, "0")}`,
+      genre: genre.value,
+      area: area.value,
+      remarks: remarks.value
+    };
 
-#calendar-table .calendar-cell {
-  min-height: 4em;
-}
+    if (editingIndex !== null) {
+      itemList[editingIndex] = newItem;
+    } else {
+      itemList.push(newItem);
+    }
+    
+    saveToLocal();
+    renderList();
+    switchScreen('list');
+    showAlertForExpiredItems(); // 保存後、一覧表示時にアラート
+    clearForm();
+  };
+  
+  /**
+   * アイテムを削除
+   */
+  const deleteItem = (index) => {
+    if (confirm("本当に削除しますか？")) {
+      itemList.splice(index, 1);
+      saveToLocal();
+      renderList();
+    }
+  };
+  
+  /**
+   * アイテムを編集フォームに読み込む
+   */
+  const editItem = (index) => {
+    const item = itemList[index];
+    const [y, m, d] = item.date.split("-").map(Number);
 
-#calendar-table ul {
-  padding-left: 1em;
-  margin: 0;
-  list-style-type: none;
-}
+    elements.name.value = item.name;
+    elements.year.value = y;
+    elements.month.value = m;
+    updateDaySelector();
+    elements.day.value = d;
+    elements.genre.value = item.genre;
+    elements.area.value = item.area;
+    elements.remarks.value = item.remarks || "";
 
-#calendar-table li {
-    font-size: 25px;
-}
+    editingIndex = index;
+    switchScreen('input');
+  };
+  
+  /**
+   * アイテム一覧をフィルタリングして描画
+   */
+  const renderList = () => {
+    const genre = genreFilter.value;
+    const area = areaFilter.value;
+    const sortOrder = sortSelect.value;
+    
+    // フィルタリング
+    let filteredItems = itemList.filter(item => 
+      (genre === "すべて" || item.genre === genre) &&
+      (area === "すべて" || item.area === area)
+    );
 
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1em;
-  align-items: center;
-  margin-bottom: 1em;
-  background-color: rgba(255, 255, 255, 0.7);
-  padding: 10px;
-  border-radius: 5px;
-}
+    // ソート
+    filteredItems.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        // ★修正箇所: `dateB - a` を `dateB - dateA` に修正
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
 
-.calendar-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1em;
-}
+    // 描画
+    listTableBody.innerHTML = "";
+    const fragment = document.createDocumentFragment();
+    filteredItems.forEach((item, originalIndex) => {
+      const { color } = getExpirationStatus(item.date);
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td style="color: ${color}">${item.name}</td>
+        <td style="color: ${color}">${item.date}</td>
+        <td style="color: ${color}">${item.genre}</td>
+        <td style="color: ${color}">${item.area}</td>
+        <td style="color: ${color}">${item.remarks || ""}</td>
+        <td>
+          <button class="edit-btn" data-index="${itemList.indexOf(item)}">編集</button>
+          <button class="delete-btn" data-index="${itemList.indexOf(item)}">削除</button>
+        </td>
+        <td>
+          <a href="https://cookpad.com/jp/search/${item.name}" target="_blank" class="link-button">クックパッド</a>
+          <a href="https://www.kurashiru.com/search?query=${item.name}" target="_blank" class="link-button">クラシル</a>
+        </td>
+      `;
+      fragment.appendChild(row);
+    });
+    listTableBody.appendChild(fragment);
+    displayUpcomingExpirations();
+  };
+  
+  /**
+   * カレンダーを描画
+   */
+  const renderCalendar = () => {
+    const now = new Date();
+    const viewDate = new Date(now.getFullYear(), now.getMonth() + currentMonthOffset, 1);
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
 
-.calendar-nav span {
-  font-size: 25px;
-  color: white;
-  -webkit-text-stroke: 0.5px black;
-}
+    calendarMonthLabel.textContent = `${year}年 ${month + 1}月`;
 
-/* --- 通知 --- */
-.notice-box {
-  background: #fff8c4;
-  border: 1px solid #ccc;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 5px;
-}
-.notice-box ul {
-  margin-top: 5px;
-  padding-left: 20px;
-}
-.contact-info {
-    font-size: 30px;
-    background-color: rgba(255, 255, 255, 0.7);
-    padding: 5px;
-    display: inline-block;
-    border-radius: 4px;
-}
+    const firstDayOfWeek = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    calendarTableBody.innerHTML = "";
+    const fragment = document.createDocumentFragment();
+    let row = document.createElement('tr');
+    
+    for (let i = 0; i < firstDayOfWeek; i++) {
+        row.appendChild(document.createElement('td'));
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const itemsOnDate = itemList.filter(item => item.date === dateStr);
+        
+        const cell = document.createElement('td');
+        cell.innerHTML = `<div class="calendar-cell"><strong>${d}</strong></div>`;
+
+        if (itemsOnDate.length > 0) {
+            const ul = document.createElement('ul');
+            itemsOnDate.forEach(item => {
+                const { color } = getExpirationStatus(item.date);
+                const li = document.createElement('li');
+                li.textContent = item.name;
+                li.style.color = color;
+                ul.appendChild(li);
+            });
+            cell.querySelector('.calendar-cell').appendChild(ul);
+        }
+        row.appendChild(cell);
+
+        if ((firstDayOfWeek + d) % 7 === 0 || d === daysInMonth) {
+            fragment.appendChild(row);
+            if (d !== daysInMonth) {
+                row = document.createElement('tr');
+            }
+        }
+    }
+    calendarTableBody.appendChild(fragment);
+  };
+
+  /**
+   * 期限切れ・期限間近のアイテムを通知(画面上部)
+   */
+  const displayUpcomingExpirations = () => {
+    const expiredItems = itemList.filter(item => getExpirationStatus(item.date).isExpired);
+    const upcomingItems = itemList.filter(item => getExpirationStatus(item.date).isUpcoming);
+
+    document.querySelectorAll(".notice-container").forEach(el => el.innerHTML = "");
+
+    if (expiredItems.length > 0 || upcomingItems.length > 0) {
+      const box = document.createElement("div");
+      box.className = "notice-box";
+      let html = "";
+      if (expiredItems.length > 0) {
+        html += "<strong>期限切れ:</strong><ul>" + expiredItems.map(item => `<li>${item.name}（${item.date}）</li>`).join("") + "</ul>";
+      }
+      if (upcomingItems.length > 0) {
+        html += "<strong>期限が近い:</strong><ul>" + upcomingItems.map(item => `<li>${item.name}（${item.date}）</li>`).join("") + "</ul>";
+      }
+      box.innerHTML = html;
+
+      screens.input.querySelector('.notice-container').appendChild(box.cloneNode(true));
+      screens.list.querySelector('.notice-container').appendChild(box);
+    }
+  };
+
+  // --- イベントリスナーの設定 ---
+  form.addEventListener('submit', saveItem);
+  elements.year.addEventListener('change', updateDaySelector);
+  elements.month.addEventListener('change', updateDaySelector);
+
+  document.getElementById('show-list-btn').addEventListener('click', () => {
+    renderList();
+    switchScreen('list');
+    showAlertForExpiredItems();
+  });
+  
+  document.getElementById('show-calendar-btn').addEventListener('click', () => {
+      renderCalendar();
+      switchScreen('calendar');
+  });
+
+  document.querySelectorAll('.back-to-input-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchScreen('input'));
+  });
+
+  [genreFilter, areaFilter, sortSelect].forEach(el => el.addEventListener('change', renderList));
+
+  listTableBody.addEventListener('click', (e) => {
+    const target = e.target;
+    if (target.classList.contains('edit-btn')) {
+      editItem(Number(target.dataset.index));
+    }
+    if (target.classList.contains('delete-btn')) {
+      deleteItem(Number(target.dataset.index));
+    }
+  });
+
+  document.getElementById('prev-month-btn').addEventListener('click', () => {
+    currentMonthOffset--;
+    renderCalendar();
+  });
+
+  document.getElementById('next-month-btn').addEventListener('click', () => {
+    currentMonthOffset++;
+    renderCalendar();
+  });
+
+  // 修正箇所: データ復元ボタンのクリックイベント
+  const importBtn = document.getElementById('import-btn');
+  const importFile = document.getElementById('import-file');
+
+  if (importBtn && importFile) {
+      importBtn.addEventListener('click', () => {
+          importFile.click(); // 隠されている <input type="file"> をクリック
+      });
+  }
 
 
+  // --- 初期化処理 ---
+  const initialize = () => {
+    initDateSelectors();
+    renderList();
+    displayUpcomingExpirations();
+    showAlertForExpiredItems();
+  };
 
+  initialize();
+});
