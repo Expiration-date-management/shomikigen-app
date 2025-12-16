@@ -1,6 +1,6 @@
 // DOM読み込み完了後にスクリプトを実行
 document.addEventListener('DOMContentLoaded', () => {
-  console.log("バージョン 4.2 (Sort fix)");
+  console.log("バージョン 4.3 (Backup/Restore fix)");
 
   // --- 定数定義 ---
   const EXPIRATION_THRESHOLD_DAYS = 7; // 期限が近いと判断する日数
@@ -29,6 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const areaFilter = document.getElementById('area-filter');
   const sortSelect = document.getElementById('sort-select');
 
+  // バックアップ・復元用の要素
+  const exportBtn = document.getElementById('export-btn');
+  const importBtn = document.getElementById('import-btn');
+  const importFile = document.getElementById('import-file');
+
   // --- アプリケーションの状態 ---
   let itemList = JSON.parse(localStorage.getItem("items")) || [];
   let editingIndex = null;
@@ -37,8 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- ヘルパー関数 ---
   /**
    * 日付文字列から期限の状態を判定
-   * @param {string} dateStr - 'YYYY-MM-DD'形式の日付文字列
-   * @returns {{diffDays: number, isExpired: boolean, isUpcoming: boolean, color: string}}
    */
   const getExpirationStatus = (dateStr) => {
     const itemDate = new Date(dateStr);
@@ -65,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   /**
    * 指定された画面を表示し、他を非表示にする
-   * @param {string} screenKey - 'input', 'list', 'calendar' のいずれか
    */
   const switchScreen = (screenKey) => {
     Object.keys(screens).forEach(key => {
@@ -94,9 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // --- 日付セレクタ関連 ---
-  /**
-   * 年月日に合わせて日セレクタを更新
-   */
   const updateDaySelector = () => {
     const year = parseInt(elements.year.value);
     const month = parseInt(elements.month.value);
@@ -108,15 +107,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const option = new Option(d, d);
       elements.day.appendChild(option);
     }
-    // 以前選択していた日が存在すれば再選択
     if (currentDay <= daysInMonth) {
       elements.day.value = currentDay;
     }
   };
   
-  /**
-   * 日付セレクタを初期化
-   */
   const initDateSelectors = () => {
     const currentYear = new Date().getFullYear();
     for (let y = currentYear; y <= currentYear + 10; y++) {
@@ -131,20 +126,14 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // --- データ操作と描画 ---
-  /**
-   * フォームをクリア
-   */
   const clearForm = () => {
     form.reset();
-    initDateSelectors(); // 日付を現在にリセット
+    initDateSelectors();
     editingIndex = null;
   };
   
-  /**
-   * アイテムを保存または更新
-   */
   const saveItem = (event) => {
-    event.preventDefault(); // フォームのデフォルト送信をキャンセル
+    event.preventDefault();
     const { name, year, month, day, genre, area, remarks } = elements;
     const date = new Date(year.value, month.value - 1, day.value);
 
@@ -170,13 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
     saveToLocal();
     renderList();
     switchScreen('list');
-    showAlertForExpiredItems(); // 保存後、一覧表示時にアラート
+    showAlertForExpiredItems();
     clearForm();
   };
   
-  /**
-   * アイテムを削除
-   */
   const deleteItem = (index) => {
     if (confirm("本当に削除しますか？")) {
       itemList.splice(index, 1);
@@ -185,9 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
   
-  /**
-   * アイテムを編集フォームに読み込む
-   */
   const editItem = (index) => {
     const item = itemList[index];
     const [y, m, d] = item.date.split("-").map(Number);
@@ -205,29 +188,22 @@ document.addEventListener('DOMContentLoaded', () => {
     switchScreen('input');
   };
   
-  /**
-   * アイテム一覧をフィルタリングして描画
-   */
   const renderList = () => {
     const genre = genreFilter.value;
     const area = areaFilter.value;
     const sortOrder = sortSelect.value;
     
-    // フィルタリング
     let filteredItems = itemList.filter(item => 
       (genre === "すべて" || item.genre === genre) &&
       (area === "すべて" || item.area === area)
     );
 
-    // ソート
     filteredItems.sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
-        // ★修正箇所: `dateB - a` を `dateB - dateA` に修正
         return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
     });
 
-    // 描画
     listTableBody.innerHTML = "";
     const fragment = document.createDocumentFragment();
     filteredItems.forEach((item, originalIndex) => {
@@ -254,9 +230,6 @@ document.addEventListener('DOMContentLoaded', () => {
     displayUpcomingExpirations();
   };
   
-  /**
-   * カレンダーを描画
-   */
   const renderCalendar = () => {
     const now = new Date();
     const viewDate = new Date(now.getFullYear(), now.getMonth() + currentMonthOffset, 1);
@@ -306,9 +279,6 @@ document.addEventListener('DOMContentLoaded', () => {
     calendarTableBody.appendChild(fragment);
   };
 
-  /**
-   * 期限切れ・期限間近のアイテムを通知(画面上部)
-   */
   const displayUpcomingExpirations = () => {
     const expiredItems = itemList.filter(item => getExpirationStatus(item.date).isExpired);
     const upcomingItems = itemList.filter(item => getExpirationStatus(item.date).isUpcoming);
@@ -374,16 +344,59 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCalendar();
   });
 
-  // 修正箇所: データ復元ボタンのクリックイベント
-  const importBtn = document.getElementById('import-btn');
-  const importFile = document.getElementById('import-file');
+  // --- バックアップ・復元処理（ここを追加・修正） ---
 
-  if (importBtn && importFile) {
-      importBtn.addEventListener('click', () => {
-          importFile.click(); // 隠されている <input type="file"> をクリック
-      });
+  // 1. バックアップ（エクスポート）ボタンの処理
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      const dataStr = JSON.stringify(itemList, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `shomikigen_backup_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
   }
 
+  // 2. 復元ボタン（見た目）をクリックしたら、ファイル入力をクリックする
+  if (importBtn && importFile) {
+    importBtn.addEventListener('click', () => {
+        importFile.click();
+    });
+  }
+
+  // 3. ファイルが選択されたらデータを復元する処理
+  if (importFile) {
+    importFile.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (Array.isArray(importedData)) {
+            itemList = importedData; // データを更新
+            saveToLocal(); // ローカルストレージに保存
+            renderList(); // 一覧を再描画
+            alert("データを復元しました！");
+          } else {
+            alert("不正なファイル形式です。");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("ファイルの読み込みに失敗しました。");
+        }
+      };
+      reader.readAsText(file);
+      // 同じファイルを再度選べるようにリセット
+      event.target.value = '';
+    });
+  }
 
   // --- 初期化処理 ---
   const initialize = () => {
